@@ -184,8 +184,7 @@
                 </div>
                 <div class="food-details">
                     <h2 id="foodName">Food Name</h2>
-                    <p><strong>Restaurant:</strong> <span id="foodRestaurant">Restaurant Name</span></p>
-                    <p><strong>Category:</strong> <span id="foodCategory">Category</span></p>
+                    <p><strong>Restaurant:</strong> <span id="foodRestaurant">Restaurant</span></p>
                     <p><strong>Price:</strong> $<span id="foodPrice">0.00</span></p>
                     <p><strong>Description:</strong></p>
                     <p id="foodDescription">Food description goes here.</p>
@@ -253,7 +252,6 @@
 
             document.getElementById('foodName').textContent = food.name;
             document.getElementById('foodRestaurant').textContent = food.restaurant;
-            document.getElementById('foodCategory').textContent = food.category;
             document.getElementById('foodPrice').textContent = food.price.toFixed(2);
             document.getElementById('foodDescription').textContent = food.description;
 

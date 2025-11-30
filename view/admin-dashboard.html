@@ -403,7 +403,6 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Restaurant</th>
-                                    <th>Category</th>
                                     <th>Price</th>
                                     <th>Created By</th>
                                     <th>Date Added</th>
@@ -412,7 +411,7 @@
                             </thead>
                             <tbody id="foodsTableBody">
                                 <tr>
-                                    <td colspan="7" class="text-center">Loading...</td>
+                                    <td colspan="6" class="text-center">Loading...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -732,7 +731,6 @@
                 <tr>
                     <td>${food.name}</td>
                     <td>${food.restaurant}</td>
-                    <td>${food.category}</td>
                     <td>$${food.price.toFixed(2)}</td>
                     <td>${food.createdBy ? food.createdBy.name : 'N/A'}</td>
                     <td>${new Date(food.createdAt).toLocaleDateString()}</td>

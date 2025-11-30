@@ -16,9 +16,12 @@ const getMerchantOrders = async (req, res) => {
                 .populate('createdBy', 'name email profilePicture')
                 .sort({ createdAt: -1 });
         } else {
-            // Get all foods created by this merchant
-            const merchantFoods = await Food.find({ createdBy: req.user._id });
-            const foodIds = merchantFoods.map(food => food._id);
+            // Get all foods from this merchant's restaurant
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            const restaurantFoods = await Food.find({ restaurant: req.user.restaurantName });
+            const foodIds = restaurantFoods.map(food => food._id);
 
             // Get all orders for these foods
             orders = await Order.find({ foodId: { $in: foodIds } })
@@ -48,8 +51,11 @@ const getPendingOrders = async (req, res) => {
                 .populate('createdBy', 'name email profilePicture')
                 .sort({ createdAt: -1 });
         } else {
-            const merchantFoods = await Food.find({ createdBy: req.user._id });
-            const foodIds = merchantFoods.map(food => food._id);
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            const restaurantFoods = await Food.find({ restaurant: req.user.restaurantName });
+            const foodIds = restaurantFoods.map(food => food._id);
 
             orders = await Order.find({ 
                 foodId: { $in: foodIds },
@@ -81,10 +87,12 @@ const acceptOrder = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Verify this order belongs to merchant's food (skip for admin)
+        // Verify this order belongs to merchant's restaurant (skip for admin)
         if (req.user.role !== 'admin') {
-            const food = await Food.findById(order.foodId._id);
-            if (food.createdBy.toString() !== req.user._id.toString()) {
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            if (order.foodId.restaurant !== req.user.restaurantName) {
                 return res.status(403).json({ message: 'Not authorized to manage this order' });
             }
         }
@@ -139,10 +147,12 @@ const rejectOrder = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Verify this order belongs to merchant's food (skip for admin)
+        // Verify this order belongs to merchant's restaurant (skip for admin)
         if (req.user.role !== 'admin') {
-            const food = await Food.findById(order.foodId._id);
-            if (food.createdBy.toString() !== req.user._id.toString()) {
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            if (order.foodId.restaurant !== req.user.restaurantName) {
                 return res.status(403).json({ message: 'Not authorized to manage this order' });
             }
         }
@@ -192,10 +202,12 @@ const startPreparingOrder = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Verify this order belongs to merchant's food (skip for admin)
+        // Verify this order belongs to merchant's restaurant (skip for admin)
         if (req.user.role !== 'admin') {
-            const food = await Food.findById(order.foodId._id);
-            if (food.createdBy.toString() !== req.user._id.toString()) {
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            if (order.foodId.restaurant !== req.user.restaurantName) {
                 return res.status(403).json({ message: 'Not authorized to manage this order' });
             }
         }
@@ -244,10 +256,12 @@ const markOrderReady = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Verify this order belongs to merchant's food (skip for admin)
+        // Verify this order belongs to merchant's restaurant (skip for admin)
         if (req.user.role !== 'admin') {
-            const food = await Food.findById(order.foodId._id);
-            if (food.createdBy.toString() !== req.user._id.toString()) {
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            if (order.foodId.restaurant !== req.user.restaurantName) {
                 return res.status(403).json({ message: 'Not authorized to manage this order' });
             }
         }
@@ -298,10 +312,12 @@ const handleUnavailableItem = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        // Verify this order belongs to merchant's food (skip for admin)
+        // Verify this order belongs to merchant's restaurant (skip for admin)
         if (req.user.role !== 'admin') {
-            const food = await Food.findById(order.foodId._id);
-            if (food.createdBy.toString() !== req.user._id.toString()) {
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            if (order.foodId.restaurant !== req.user.restaurantName) {
                 return res.status(403).json({ message: 'Not authorized to manage this order' });
             }
         }
@@ -363,8 +379,11 @@ const getMerchantStats = async (req, res) => {
             // Calculate total revenue for all orders
             completedOrdersList = await Order.find({ status: 'delivered' }).populate('foodId');
         } else {
-            const merchantFoods = await Food.find({ createdBy: req.user._id });
-            const foodIds = merchantFoods.map(food => food._id);
+            if (!req.user.restaurantName) {
+                return res.status(400).json({ message: 'Merchant must have a restaurant name assigned' });
+            }
+            const restaurantFoods = await Food.find({ restaurant: req.user.restaurantName });
+            const foodIds = restaurantFoods.map(food => food._id);
 
             totalOrders = await Order.countDocuments({ foodId: { $in: foodIds } });
             pendingOrders = await Order.countDocuments({ foodId: { $in: foodIds }, status: 'pending' });

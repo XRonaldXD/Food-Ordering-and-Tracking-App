@@ -266,10 +266,6 @@
                             <input type="text" class="form-control" id="foodName" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <input type="text" class="form-control" id="foodCategory" placeholder="e.g., Pizza, Burger, Sushi" required>
-                        </div>
-                        <div class="mb-3">
                             <label class="form-label">Price</label>
                             <input type="number" class="form-control" id="foodPrice" step="0.01" min="0" required>
                         </div>
@@ -304,10 +300,6 @@
                         <div class="mb-3">
                             <label class="form-label">Food Name</label>
                             <input type="text" class="form-control" id="updateFoodName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <input type="text" class="form-control" id="updateFoodCategory" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Price</label>
@@ -418,12 +410,12 @@
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <h4>${food.name}</h4>
-                                <p class="text-muted mb-2">${food.restaurant} • ${food.category}</p>
+                                <p class="text-muted mb-2">${food.restaurant}</p>
                                 <p class="text-success fw-bold mb-2">$${food.price.toFixed(2)}</p>
                                 <p class="card-text">${food.description}</p>
                             </div>
                             <div>
-                                <button class="btn btn-sm btn-warning me-2" onclick="editFood('${food._id}', '${food.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.category.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.price}', '${food.description.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ')}')">
+                                <button class="btn btn-sm btn-warning me-2" onclick="editFood('${food._id}', '${food.name.replace(/'/g, "\\'")}', '${food.price}', '${food.description.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ')}')">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-danger" onclick="deleteFood('${food._id}')">
@@ -509,11 +501,10 @@
         // Create new food
         async function createFood() {
             const name = document.getElementById('foodName').value;
-            const category = document.getElementById('foodCategory').value;
             const price = document.getElementById('foodPrice').value;
             const description = document.getElementById('foodDescription').value;
-            
-            if (!name || !category || !price || !description) {
+
+            if (!name || !price || !description) {
                 showAlert('Error', 'Please fill in all fields');
                 return;
             }
@@ -526,7 +517,6 @@
                     },
                     body: JSON.stringify({
                         name,
-                        category,
                         price: parseFloat(price),
                         description
                     })
@@ -549,7 +539,7 @@
         }
 
         // Edit food
-        function editFood(id, name, category, price, description) {
+        function editFood(id, name, price, description) {
             // Decode HTML entities
             const decodeHTML = (html) => {
                 const txt = document.createElement('textarea');
@@ -559,7 +549,6 @@
             
             document.getElementById('updateFoodId').value = id;
             document.getElementById('updateFoodName').value = decodeHTML(name);
-            document.getElementById('updateFoodCategory').value = decodeHTML(category);
             document.getElementById('updateFoodPrice').value = price;
             document.getElementById('updateFoodDescription').value = decodeHTML(description);
             
@@ -571,11 +560,10 @@
         async function updateFood() {
             const id = document.getElementById('updateFoodId').value;
             const name = document.getElementById('updateFoodName').value;
-            const category = document.getElementById('updateFoodCategory').value;
             const price = document.getElementById('updateFoodPrice').value;
             const description = document.getElementById('updateFoodDescription').value;
-            
-            if (!name || !category || !price || !description) {
+
+            if (!name || !price || !description) {
                 showAlert('Error', 'Please fill in all fields');
                 return;
             }
@@ -588,7 +576,6 @@
                     },
                     body: JSON.stringify({
                         name,
-                        category,
                         price: parseFloat(price),
                         description
                     })
