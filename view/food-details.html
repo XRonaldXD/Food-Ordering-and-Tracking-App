@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Food Details - Food Ordering & Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .food-details {
+            background: #1f1f1f;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid #2d2d2d;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .food-details h2 {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .food-details p {
+            color: #b0b0b0;
+        }
+
+        .container {
+            background: #1f1f1f;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-center i {
+            color: #ff6b6b;
+        }
+
+        .col-md-8 {
+            color: #ffffff;
+        }
+
+        .col-md-8 h3 {
+            color: #ffffff;
+        }
+
+        .col-md-8 p {
+            color: #b0b0b0;
+        }
+
+        .text-muted {
+            color: #b0b0b0 !important;
+        }
+
+        .modal-content {
+            background: #1f1f1f;
+            border: 1px solid #2d2d2d;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #2d2d2d;
+        }
+
+        h4 {
+            color: #ffffff;
+        }
+
+        .form-label {
+            color: #b0b0b0;
+            font-weight: 600;
+        }
+
+        .form-control, .form-select {
+            background: #2a2a2a;
+            border: 2px solid #3d3d3d;
+            color: #ffffff;
+            border-radius: 10px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: #333333;
+            border-color: #ff6b6b;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: #808080;
+        }
+
+        .btn-close {
+            filter: invert(1);
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #ee5a52;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .ms-2 {
+            color: #b0b0b0;
+        }
+
+        .btn-secondary {
+            background: #3d3d3d;
+            border: none;
+            color: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            background: #4d4d4d;
+            color: #ffffff;
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .badge.bg-warning {
+            background: #ffc107 !important;
+            color: #000;
+        }
+
+        .badge.bg-info {
+            background: #17a2b8 !important;
+        }
+
+        .badge.bg-success {
+            background: #28a745 !important;
+        }
+
+        .badge.bg-danger {
+            background: #dc3545 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+    <!-- Navbar Container -->
+    <div id="navbar"></div>
+
+    <div class="container my-5">
+        <h1 class="mb-4">Food Details</h1>
+
+        <!-- Food details content goes here -->
+        <div class="row">
+            <!-- Left Column: Food Icon and Details -->
+            <div class="col-md-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-basket2-fill" style="font-size: 6rem; color: #ff6b6b;"></i>
+                </div>
+                <div class="food-details">
+                    <h2 id="foodName">Food Name</h2>
+                    <p><strong>Restaurant:</strong> <span id="foodRestaurant">Restaurant Name</span></p>
+                    <p><strong>Category:</strong> <span id="foodCategory">Category</span></p>
+                    <p><strong>Price:</strong> $<span id="foodPrice">0.00</span></p>
+                    <p><strong>Description:</strong></p>
+                    <p id="foodDescription">Food description goes here.</p>
+                </div>
+            </div>
+
+            <!-- Middle and Right Column -->
+            <div class="col-md-8">
+                <h3>Orders</h3>
+                <button class="btn btn-primary mb-3" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#createOrderModal"
+                        id="addOrderButton">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Place Your Order
+                </button>
+                <div id="ordersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Order Modal -->
+     <div class="modal fade" id="createOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Place Your Order</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="orderForm">
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="orderQuantity" min="1" value="1" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Special Instructions (Optional)</label>
+                            <textarea class="form-control" id="orderNotes" rows="4" placeholder="Any special requests or dietary requirements..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createOrder()">Place Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Fetch food details dynamically
+    async function fetchFoodDetails() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const foodId = params.get('id');
+
+            if (!foodId) {
+                throw new Error('No food ID provided in the URL');
+            }
+
+            const response = await fetch(`/foods/${foodId}`);
+            if (!response.ok) throw new Error('Failed to fetch food details');
+            const food = await response.json();
+
+            document.getElementById('foodName').textContent = food.name;
+            document.getElementById('foodRestaurant').textContent = food.restaurant;
+            document.getElementById('foodCategory').textContent = food.category;
+            document.getElementById('foodPrice').textContent = food.price.toFixed(2);
+            document.getElementById('foodDescription').textContent = food.description;
+
+            // Load orders for the food
+            loadOrders(foodId);
+        } catch (error) {
+            console.error('Error fetching food details:', error);
+            document.querySelector('.container').innerHTML = `
+                <p class="text-center text-danger">Failed to load food details. Please try again later.</p>
+            `;
+        }
+    }
+
+        // Cache current user and all users to avoid repeated fetches
+    let currentUser = null;
+    const userCache = new Map(); // userId → user object
+
+    async function loadOrders(foodId) {
+        try {
+            const response = await fetch('/orders');
+            if (!response.ok) throw new Error('Failed to fetch orders');
+            const allOrders = await response.json();
+
+            const orders = allOrders.filter(o => o.foodId === foodId);
+            const ordersList = document.getElementById('ordersList');
+
+            if (orders.length === 0) {
+                ordersList.innerHTML = '<p class="text-muted">No orders yet. Be the first to order!</p>';
+                return;
+            }
+
+            // Fetch current logged-in user once
+            if (!currentUser) {
+                try {
+                    const meRes = await fetch('/auth/me');
+                    if (meRes.ok) {
+                        const data = await meRes.json();
+                        if (data.loggedIn && data.user) {
+                            currentUser = data.user;
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            }
+
+            // Build order HTML with real usernames
+            const orderElements = await Promise.all(orders.map(async (order) => {
+                let displayName = 'Anonymous';
+
+                // If order already has createdByName (future-proof), use it
+                if (order.createdByName) {
+                    displayName = order.createdByName;
+                }
+                // Otherwise, fetch user by createdBy ID
+                else if (order.createdBy) {
+                    const userId = order.createdBy;
+
+                    // Use cache if already fetched
+                    if (userCache.has(userId)) {
+                        const user = userCache.get(userId);
+                        displayName = user.name || user.username || user.email.split('@')[0];
+                    } else {
+                        try {
+                            const userRes = await fetch(`/user/${userId}`);
+                            if (userRes.ok) {
+                                const user = await userRes.json();
+                                userCache.set(userId, user);
+                                displayName = user.name || user.username || user.email.split('@')[0];
+                            }
+                        } catch (e) {
+                            displayName = 'Unknown User';
+                        }
+                    }
+                }
+
+                const isOwnOrder = currentUser && 
+                    (order.createdBy === currentUser._id || order.createdBy === currentUser.id);
+
+                const statusColors = {
+                    'pending': 'warning',
+                    'preparing': 'info',
+                    'delivered': 'success',
+                    'cancelled': 'danger'
+                };
+
+                const statusColor = statusColors[order.status] || 'secondary';
+
+                return `
+                    <div class="mb-4 p-4 rounded" style="background: #2a2a2a; border-left: 5px solid ${isOwnOrder ? '#ff6b6b' : '#444'}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="mb-1">
+                                    <strong>${displayName}</strong>
+                                    ${isOwnOrder ? '<small class="text-primary ms-2">(You)</small>' : ''}
+                                    <span class="badge bg-${statusColor} ms-2">${order.status.toUpperCase()}</span>
+                                </p>
+                                <p class="mb-2"><strong>Quantity:</strong> ${order.quantity}</p>
+                                ${order.notes ? `<p class="mb-2"><strong>Notes:</strong> ${order.notes.replace(/\n/g, '<br>')}</p>` : ''}
+                                <small class="text-muted">
+                                    ${new Date(order.createdAt).toLocaleString('en-US', {
+                                        year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                    })}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }));
+
+            ordersList.innerHTML = orderElements.join('');
+
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            document.getElementById('ordersList').innerHTML = 
+                '<p class="text-center text-danger">Failed to load orders.</p>';
+        }
+    }
+
+    // Create a new order
+    async function createOrder() {
+        const params = new URLSearchParams(window.location.search);
+        const foodId = params.get('id');
+
+        const quantity = document.getElementById('orderQuantity').value;
+        const orderNotes = document.getElementById('orderNotes').value;
+
+        const response = await fetch('/auth/me');
+        if (!response.ok) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!quantity || quantity < 1) {
+            alert('Please enter a valid quantity.');
+            return;
+        }
+
+        const orderData = {
+            foodId: foodId,
+            quantity: parseInt(quantity),
+            notes: orderNotes,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            const response = await fetch('/orders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            if (!response.ok) throw new Error('Failed to create order');
+
+            // Close modal and refresh orders
+            const createOrderModal = bootstrap.Modal.getInstance(document.getElementById('createOrderModal'));
+            createOrderModal.hide();
+            fetchFoodDetails();
+        } catch (error) {
+            console.error('Error creating order:', error);
+            alert('Failed to place order. Please try again later.');
+        }
+    }
+
+    // Check if user is logged in and show/hide order button
+    async function checkLoginAndToggleOrderButton() {
+        try {
+            const response = await fetch('/auth/me');
+            const addOrderButton = document.getElementById('addOrderButton');
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.loggedIn) {
+                    addOrderButton.style.display = 'inline-block';
+                } else {
+                    addOrderButton.style.display = 'none';
+                }
+            } else {
+                addOrderButton.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error checking login status:', error);
+            document.getElementById('addOrderButton').style.display = 'none';
+        }
+    }
+
+    // Load navbar with auth check
+    async function loadNavbar() {
+        try {
+            const response = await fetch('navbar.html');
+            if (!response.ok) throw new Error('Failed to load navbar');
+            document.getElementById('navbar').innerHTML = await response.text();
+            // Check authentication after navbar loads
+            if (window.checkNavbarAuth) {
+                window.checkNavbarAuth();
+            }
+        } catch (error) {
+            console.error('Error loading navbar:', error);
+        }
+    }
+
+    // Initial fetch
+    loadNavbar();
+    fetchFoodDetails();
+    checkLoginAndToggleOrderButton();
+
+</script>
+
+<script src="./js/checkAuth.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: #1f1f1f; border-bottom: 1px solid #2d2d2d;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/" style="color: #ffffff; font-weight: 600;">
+            <i class="bi bi-basket2-fill"></i> Food Ordering & Tracking
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="/" style="color: #ffffff;">
+                        <i class="bi bi-house-door"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/profile" style="color: #b0b0b0;">
+                        <i class="bi bi-person-circle"></i> Profile
+                    </a>
+                </li>
+                <li class="nav-item" id="authItem">
+                    <a class="nav-link" href="/login" style="color: #b0b0b0;" id="authLink">
+                        <i class="bi bi-box-arrow-in-right" id="authIcon"></i> <span id="authText">Login</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    h1 {
+        color: #ffffff;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .lead {
+        color: #b0b0b0;
+        font-size: 0.95rem;
+    }
+
+    .food-card {
+        background: #1f1f1f;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        border: 1px solid #2d2d2d;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .food-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    .food-cover {
+        height: 300px;
+        object-fit: cover;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .card-title {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .card-text {
+        color: #b0b0b0;
+    }
+
+    .search-box {
+        max-width: 600px;
+    }
+
+    .form-control {
+        background: #2a2a2a;
+        border: 2px solid #3d3d3d;
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .form-control:focus {
+        background: #333333;
+        border-color: #ff6b6b;
+        color: #ffffff;
+        box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.25);
+    }
+
+    .form-control::placeholder {
+        color: #808080;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid #3d3d3d;
+        color: #ffffff;
+        border-radius: 10px;
+        background: #2a2a2a;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-primary:hover {
+        background: #333333;
+        border-color: #667eea;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .badge {
+        background: #667eea;
+    }
+
+    #noResults h3 {
+        color: #b0b0b0;
+    }
+
+    #noResults p {
+        color: #808080;
+    }
+
+    .btn-sm {
+        border: 2px solid #3d3d3d;
+        background: #2a2a2a;
+        color: #ffffff;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-sm:hover {
+        background: #333333;
+        border-color: #667eea;
+        color: #ffffff;
+    }
+</style>
+
+<script src="js/checkAuth.js"></script>
