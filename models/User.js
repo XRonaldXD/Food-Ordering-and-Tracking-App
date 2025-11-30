@@ -19,6 +19,19 @@ const userSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String
+  },
+  role: {
+    type: String,
+    enum: ['customer', 'merchant', 'driver', 'admin'],
+    default: 'customer'
+  },
+  restaurantName: {
+    type: String,
+    required: false
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: true });
 

@@ -210,7 +210,9 @@
             <img id="profilePic" src="https://via.placeholder.com/100" alt="Profile" class="profile-pic mb-3">
             <h2 id="userName">Loading...</h2>
             <p id="userEmail" class="text-muted"></p>
-            <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createFoodModal">
+            <p id="userRole" class="badge bg-primary"></p>
+            <p id="restaurantName" class="text-muted"></p>
+            <button class="btn btn-primary mt-3" id="addFoodBtn" data-bs-toggle="modal" data-bs-target="#createFoodModal" style="display: none;">
                 <i class="bi bi-plus-circle"></i> Add New Food Item
             </button>
         </div>
@@ -256,13 +258,12 @@
                 </div>
                 <div class="modal-body">
                     <form id="createFoodForm">
+                        <div class="alert alert-info">
+                            <strong>Restaurant:</strong> <span id="modalRestaurantName"></span>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Food Name</label>
                             <input type="text" class="form-control" id="foodName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Restaurant</label>
-                            <input type="text" class="form-control" id="foodRestaurant" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Category</label>
@@ -297,13 +298,12 @@
                 <div class="modal-body">
                     <form id="updateFoodForm">
                         <input type="hidden" id="updateFoodId">
+                        <div class="alert alert-info">
+                            <strong>Restaurant:</strong> <span id="updateModalRestaurantName"></span>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Food Name</label>
                             <input type="text" class="form-control" id="updateFoodName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Restaurant</label>
-                            <input type="text" class="form-control" id="updateFoodRestaurant" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Category</label>
@@ -354,8 +354,27 @@
                 
                 document.getElementById('userName').textContent = user.name || user.displayName;
                 document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userRole').textContent = user.role ? user.role.toUpperCase() : 'CUSTOMER';
+                
                 if (user.profilePicture || user.photos) {
                     document.getElementById('profilePic').src = user.profilePicture || user.photos[0]?.value;
+                }
+
+                // Show restaurant name if merchant
+                if (user.restaurantName) {
+                    document.getElementById('restaurantName').textContent = `Restaurant: ${user.restaurantName}`;
+                }
+
+                // Show Add Food button only for merchants and admins
+                if (user.role === 'merchant' || user.role === 'admin') {
+                    document.getElementById('addFoodBtn').style.display = 'inline-block';
+                    document.getElementById('modalRestaurantName').textContent = user.restaurantName || 'Not set';
+                    document.getElementById('updateModalRestaurantName').textContent = user.restaurantName || 'Not set';
+                    
+                    // Show warning if no restaurant name set
+                    if (!user.restaurantName) {
+                        showAlert('Warning', 'Please contact admin to set your restaurant name before creating food items.');
+                    }
                 }
             } catch (error) {
                 console.error('Error loading profile:', error);
@@ -382,7 +401,11 @@
                 const userData = await userResponse.json();
                 const userId = userData.user._id || userData.user.id;
                 
-                const myFoods = allFoods.filter(food => food.createdBy === userId);
+                // Filter foods created by current user (handle both string and object IDs)
+                const myFoods = allFoods.filter(food => {
+                    const createdById = typeof food.createdBy === 'object' ? food.createdBy._id : food.createdBy;
+                    return createdById === userId;
+                });
                 
                 const foodsList = document.getElementById('foodsList');
                 if (myFoods.length === 0) {
@@ -400,7 +423,7 @@
                                 <p class="card-text">${food.description}</p>
                             </div>
                             <div>
-                                <button class="btn btn-sm btn-warning me-2" onclick="editFood('${food._id}', '${food.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.restaurant.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.category.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.price}', '${food.description.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ')}')">
+                                <button class="btn btn-sm btn-warning me-2" onclick="editFood('${food._id}', '${food.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.category.replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${food.price}', '${food.description.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ')}')">
                                     <i class="bi bi-pencil"></i> Edit
                                 </button>
                                 <button class="btn btn-sm btn-danger" onclick="deleteFood('${food._id}')">
@@ -427,7 +450,11 @@
                 const userData = await userResponse.json();
                 const userId = userData.user._id || userData.user.id;
                 
-                const myOrders = allOrders.filter(order => order.createdBy === userId);
+                // Filter orders created by current user (handle both string and object IDs)
+                const myOrders = allOrders.filter(order => {
+                    const createdById = typeof order.createdBy === 'object' ? order.createdBy._id : order.createdBy;
+                    return createdById === userId;
+                });
                 
                 const ordersList = document.getElementById('ordersList');
                 if (myOrders.length === 0) {
@@ -437,21 +464,33 @@
                 
                 const statusColors = {
                     'pending': 'warning',
+                    'accepted': 'primary',
                     'preparing': 'info',
+                    'ready': 'success',
+                    'out_for_delivery': 'info',
                     'delivered': 'success',
+                    'rejected': 'danger',
                     'cancelled': 'danger'
                 };
                 
-                ordersList.innerHTML = myOrders.map(order => `
+                ordersList.innerHTML = myOrders.map(order => {
+                    // Handle populated foodId
+                    const foodName = order.foodId ? (typeof order.foodId === 'object' ? order.foodId.name : 'Unknown Food') : 'Deleted Food';
+                    const foodRestaurant = order.foodId && typeof order.foodId === 'object' ? order.foodId.restaurant : 'N/A';
+                    const totalAmount = order.totalAmount || 0;
+                    
+                    return `
                     <div class="order-item">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div>
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2">${foodName}</h5>
+                                <p class="text-muted mb-2"><i class="bi bi-shop"></i> ${foodRestaurant}</p>
                                 <div class="mb-2">
-                                    <span class="badge bg-${statusColors[order.status] || 'secondary'}">${order.status.toUpperCase()}</span>
+                                    <span class="badge bg-${statusColors[order.status] || 'secondary'}">${order.status.toUpperCase().replace('_', ' ')}</span>
                                 </div>
-                                <p class="mb-2"><strong>Quantity:</strong> ${order.quantity}</p>
-                                ${order.notes ? `<p class="card-text mb-2"><strong>Notes:</strong> ${order.notes}</p>` : ''}
-                                <small class="text-muted">${new Date(order.createdAt).toLocaleDateString()}</small>
+                                <p class="mb-2"><strong>Quantity:</strong> ${order.quantity} | <strong>Total:</strong> $${totalAmount.toFixed(2)}</p>
+                                ${order.customerNotes || order.notes ? `<p class="card-text mb-2"><strong>Notes:</strong> ${order.customerNotes || order.notes}</p>` : ''}
+                                <small class="text-muted"><i class="bi bi-calendar"></i> ${new Date(order.createdAt).toLocaleString()}</small>
                             </div>
                             <div>
                                 <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order._id}')">
@@ -460,7 +499,7 @@
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (error) {
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersList').innerHTML = '<p class="text-center text-danger">Failed to load orders.</p>';
@@ -470,12 +509,11 @@
         // Create new food
         async function createFood() {
             const name = document.getElementById('foodName').value;
-            const restaurant = document.getElementById('foodRestaurant').value;
             const category = document.getElementById('foodCategory').value;
             const price = document.getElementById('foodPrice').value;
             const description = document.getElementById('foodDescription').value;
             
-            if (!name || !restaurant || !category || !price || !description) {
+            if (!name || !category || !price || !description) {
                 showAlert('Error', 'Please fill in all fields');
                 return;
             }
@@ -488,7 +526,6 @@
                     },
                     body: JSON.stringify({
                         name,
-                        restaurant,
                         category,
                         price: parseFloat(price),
                         description
@@ -512,7 +549,7 @@
         }
 
         // Edit food
-        function editFood(id, name, restaurant, category, price, description) {
+        function editFood(id, name, category, price, description) {
             // Decode HTML entities
             const decodeHTML = (html) => {
                 const txt = document.createElement('textarea');
@@ -522,7 +559,6 @@
             
             document.getElementById('updateFoodId').value = id;
             document.getElementById('updateFoodName').value = decodeHTML(name);
-            document.getElementById('updateFoodRestaurant').value = decodeHTML(restaurant);
             document.getElementById('updateFoodCategory').value = decodeHTML(category);
             document.getElementById('updateFoodPrice').value = price;
             document.getElementById('updateFoodDescription').value = decodeHTML(description);
@@ -535,12 +571,11 @@
         async function updateFood() {
             const id = document.getElementById('updateFoodId').value;
             const name = document.getElementById('updateFoodName').value;
-            const restaurant = document.getElementById('updateFoodRestaurant').value;
             const category = document.getElementById('updateFoodCategory').value;
             const price = document.getElementById('updateFoodPrice').value;
             const description = document.getElementById('updateFoodDescription').value;
             
-            if (!name || !restaurant || !category || !price || !description) {
+            if (!name || !category || !price || !description) {
                 showAlert('Error', 'Please fill in all fields');
                 return;
             }
@@ -553,7 +588,6 @@
                     },
                     body: JSON.stringify({
                         name,
-                        restaurant,
                         category,
                         price: parseFloat(price),
                         description

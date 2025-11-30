@@ -274,10 +274,18 @@
     async function loadOrders(foodId) {
         try {
             const response = await fetch('/orders');
-            if (!response.ok) throw new Error('Failed to fetch orders');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const allOrders = await response.json();
 
-            const orders = allOrders.filter(o => o.foodId === foodId);
+            // Filter orders for this food (handle both string and populated object)
+            const orders = allOrders.filter(o => {
+                if (!o.foodId) return false;
+                const orderFoodId = typeof o.foodId === 'object' ? o.foodId._id : o.foodId;
+                return orderFoodId === foodId;
+            });
+            
             const ordersList = document.getElementById('ordersList');
 
             if (orders.length === 0) {
@@ -295,15 +303,21 @@
                             currentUser = data.user;
                         }
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) { 
+                    console.error('Error fetching current user:', e);
+                }
             }
 
             // Build order HTML with real usernames
             const orderElements = await Promise.all(orders.map(async (order) => {
                 let displayName = 'Anonymous';
 
+                // Handle populated createdBy object
+                if (order.createdBy && typeof order.createdBy === 'object') {
+                    displayName = order.createdBy.name || order.createdBy.email.split('@')[0];
+                }
                 // If order already has createdByName (future-proof), use it
-                if (order.createdByName) {
+                else if (order.createdByName) {
                     displayName = order.createdByName;
                 }
                 // Otherwise, fetch user by createdBy ID
@@ -328,13 +342,18 @@
                     }
                 }
 
+                const createdById = typeof order.createdBy === 'object' ? order.createdBy._id : order.createdBy;
                 const isOwnOrder = currentUser && 
-                    (order.createdBy === currentUser._id || order.createdBy === currentUser.id);
+                    (createdById === currentUser._id || createdById === currentUser.id);
 
                 const statusColors = {
                     'pending': 'warning',
+                    'accepted': 'primary',
                     'preparing': 'info',
+                    'ready': 'success',
+                    'out_for_delivery': 'info',
                     'delivered': 'success',
+                    'rejected': 'danger',
                     'cancelled': 'danger'
                 };
 
@@ -347,10 +366,10 @@
                                 <p class="mb-1">
                                     <strong>${displayName}</strong>
                                     ${isOwnOrder ? '<small class="text-primary ms-2">(You)</small>' : ''}
-                                    <span class="badge bg-${statusColor} ms-2">${order.status.toUpperCase()}</span>
+                                    <span class="badge bg-${statusColor} ms-2">${order.status.toUpperCase().replace(/_/g, ' ')}</span>
                                 </p>
                                 <p class="mb-2"><strong>Quantity:</strong> ${order.quantity}</p>
-                                ${order.notes ? `<p class="mb-2"><strong>Notes:</strong> ${order.notes.replace(/\n/g, '<br>')}</p>` : ''}
+                                ${order.customerNotes || order.notes ? `<p class="mb-2"><strong>Notes:</strong> ${(order.customerNotes || order.notes).replace(/\n/g, '<br>')}</p>` : ''}
                                 <small class="text-muted">
                                     ${new Date(order.createdAt).toLocaleString('en-US', {
                                         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -366,39 +385,48 @@
 
         } catch (error) {
             console.error('Error loading orders:', error);
-            document.getElementById('ordersList').innerHTML = 
-                '<p class="text-center text-danger">Failed to load orders.</p>';
+            const ordersList = document.getElementById('ordersList');
+            if (ordersList) {
+                ordersList.innerHTML = `<p class="text-center text-danger">Failed to load orders: ${error.message}</p>`;
+            }
         }
     }
 
     // Create a new order
     async function createOrder() {
-        const params = new URLSearchParams(window.location.search);
-        const foodId = params.get('id');
-
-        const quantity = document.getElementById('orderQuantity').value;
-        const orderNotes = document.getElementById('orderNotes').value;
-
-        const response = await fetch('/auth/me');
-        if (!response.ok) {
-            window.location.href = '/login';
-            return;
-        }
-
-        if (!quantity || quantity < 1) {
-            alert('Please enter a valid quantity.');
-            return;
-        }
-
-        const orderData = {
-            foodId: foodId,
-            quantity: parseInt(quantity),
-            notes: orderNotes,
-            status: 'pending',
-            createdAt: new Date().toISOString()
-        };
-
         try {
+            // Check authentication first
+            const authResponse = await fetch('/auth/me');
+            if (!authResponse.ok) {
+                alert('You must be logged in to place an order.');
+                window.location.href = '/login';
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const foodId = params.get('id');
+
+            if (!foodId) {
+                alert('Invalid food item.');
+                return;
+            }
+
+            const quantity = document.getElementById('orderQuantity').value;
+            const orderNotes = document.getElementById('orderNotes').value;
+
+            if (!quantity || quantity < 1) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+
+            const orderData = {
+                foodId: foodId,
+                quantity: parseInt(quantity),
+                notes: orderNotes,
+                customerNotes: orderNotes,
+                status: 'pending'
+            };
+
             const response = await fetch('/orders', {
                 method: 'POST',
                 headers: {
@@ -407,15 +435,29 @@
                 body: JSON.stringify(orderData)
             });
 
-            if (!response.ok) throw new Error('Failed to create order');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create order');
+            }
 
             // Close modal and refresh orders
             const createOrderModal = bootstrap.Modal.getInstance(document.getElementById('createOrderModal'));
-            createOrderModal.hide();
+            if (createOrderModal) {
+                createOrderModal.hide();
+            }
+            
+            // Reset form
+            document.getElementById('orderQuantity').value = 1;
+            document.getElementById('orderNotes').value = '';
+            
+            // Show success message
+            alert('Order placed successfully!');
+            
+            // Refresh the page to show new order
             fetchFoodDetails();
         } catch (error) {
             console.error('Error creating order:', error);
-            alert('Failed to place order. Please try again later.');
+            alert('Failed to place order: ' + error.message);
         }
     }
 

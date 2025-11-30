@@ -6,10 +6,20 @@ const orderSchema = new mongoose.Schema({
         ref: 'Food',
         required: true
     },
+    merchantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
+    driverId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    },
     status: {
         type: String,
         required: true,
-        enum: ['pending', 'preparing', 'delivered', 'cancelled'],
+        enum: ['pending', 'accepted', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'rejected', 'cancelled'],
         default: 'pending'
     },
     quantity: {
@@ -18,14 +28,61 @@ const orderSchema = new mongoose.Schema({
         min: 1,
         default: 1
     },
+    totalAmount: {
+        type: Number,
+        required: false
+    },
     notes: {
         type: String,
         required: false
     },
-    createdBy: {
+    customerNotes: {
         type: String,
+        required: false
+    },
+    merchantNotes: {
+        type: String,
+        required: false
+    },
+    rejectionReason: {
+        type: String,
+        required: false
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
-    }
+    },
+    acceptedAt: {
+        type: Date,
+        required: false
+    },
+    readyAt: {
+        type: Date,
+        required: false
+    },
+    pickedUpAt: {
+        type: Date,
+        required: false
+    },
+    deliveredAt: {
+        type: Date,
+        required: false
+    },
+    deliveryAddress: {
+        type: String,
+        required: false
+    },
+    customerPhone: {
+        type: String,
+        required: false
+    },
+    statusHistory: [{
+        status: String,
+        timestamp: Date,
+        updatedBy: String,
+        notes: String
+    }]
 },
 { timestamps: true });
 

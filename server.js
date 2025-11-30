@@ -31,6 +31,9 @@ app.use('/auth', require('./routes/auth'));
 app.use('/foods',require('./routes/foods'));
 app.use('/user',require('./routes/user'));
 app.use('/orders',require('./routes/orders'));
+app.use('/merchant',require('./routes/merchant'));
+app.use('/driver',require('./routes/driver'));
+app.use('/admin',require('./routes/admin'));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'index.html'));
@@ -42,6 +45,18 @@ app.get('/login', (req, res) => {
 
 app.get('/profile', isLoggedIn, (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'profile.html'));
+});
+
+app.get('/merchant-dashboard', isLoggedIn, (req, res) => {
+    res.sendFile(path.join(__dirname, 'view', 'merchant-dashboard.html'));
+});
+
+app.get('/admin-dashboard', isLoggedIn, (req, res) => {
+    res.sendFile(path.join(__dirname, 'view', 'admin-dashboard.html'));
+});
+
+app.get('/driver-dashboard', isLoggedIn, (req, res) => {
+    res.sendFile(path.join(__dirname, 'view', 'driver-dashboard.html'));
 });
 
 
