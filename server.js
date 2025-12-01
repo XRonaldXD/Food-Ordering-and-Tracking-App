@@ -27,15 +27,7 @@ app.use(express.urlencoded({ extended: false }));
 // Serve static files from view folder (for navbar.html, etc.)
 app.use(express.static(path.join(__dirname, 'view')));
 
-app.use('/auth', require('./routes/auth'));
-app.use('/foods',require('./routes/foods'));
-app.use('/user',require('./routes/user'));
-app.use('/orders',require('./routes/orders'));
-app.use('/merchant',require('./routes/merchant'));
-app.use('/driver',require('./routes/driver'));
-app.use('/admin',require('./routes/admin'));
-app.use('/messages',require('./routes/messages'));
-
+// Page routes (must come before API routes to avoid conflicts)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'index.html'));
 });
@@ -63,6 +55,21 @@ app.get('/driver-dashboard', isLoggedIn, (req, res) => {
 app.get('/messages', isLoggedIn, (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'messages.html'));
 });
+
+app.get('/cart-page', isLoggedIn, (req, res) => {
+    res.sendFile(path.join(__dirname, 'view', 'cart.html'));
+});
+
+// API routes
+app.use('/auth', require('./routes/auth'));
+app.use('/foods',require('./routes/foods'));
+app.use('/user',require('./routes/user'));
+app.use('/orders',require('./routes/orders'));
+app.use('/merchant',require('./routes/merchant'));
+app.use('/driver',require('./routes/driver'));
+app.use('/admin',require('./routes/admin'));
+app.use('/messages',require('./routes/messages'));
+app.use('/cart',require('./routes/cart'));
 
 
 mongoose.connect(process.env.URL)

@@ -347,9 +347,12 @@
                                                     ${food.description}
                                                 </p>
                                             ` : ''}
-                                            <div class="mt-auto">
-                                                <button class="btn btn-sm w-100" onclick="viewFood('${food._id}')">
+                                            <div class="mt-auto d-grid gap-2">
+                                                <button class="btn btn-sm" onclick="viewFood('${food._id}')">
                                                     <i class="bi bi-eye"></i> View & Order
+                                                </button>
+                                                <button class="btn btn-sm" style="background: #28a745; border-color: #28a745; color: white;" onclick="quickAddToCart('${food._id}', '${food.name}', ${food.price}, '${food.restaurant}')">
+                                                    <i class="bi bi-cart-plus"></i> Add to Cart
                                                 </button>
                                             </div>
                                         </div>
@@ -370,6 +373,70 @@
 
         function viewFood(id) {
             window.location.href = `/food-details.html?id=${id}`;
+        }
+
+        // Quick add to cart function
+        async function quickAddToCart(foodId, foodName, foodPrice, restaurant) {
+            try {
+                // Check authentication first
+                const authResponse = await fetch('/auth/me');
+                if (!authResponse.ok) {
+                    alert('You must be logged in to add items to cart.');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const cartData = {
+                    foodId: foodId,
+                    quantity: 1,
+                    notes: ''
+                };
+
+                const response = await fetch('/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(cartData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    if (data.differentRestaurant) {
+                        const confirmSwitch = confirm(
+                            `Your cart contains items from ${data.currentRestaurant}.\nYou're trying to add an item from ${data.newRestaurant}.\n\nWould you like to clear your cart and add this item?`
+                        );
+                        if (confirmSwitch) {
+                            // Clear cart and try again
+                            await fetch('/cart/clear', { method: 'DELETE' });
+                            const retryResponse = await fetch('/cart/add', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(cartData)
+                            });
+                            if (!retryResponse.ok) {
+                                throw new Error('Failed to add item after clearing cart');
+                            }
+                            alert(`${foodName} added to cart!`);
+                            if (window.updateCartCount) {
+                                window.updateCartCount();
+                            }
+                        }
+                    } else {
+                        throw new Error(data.error || 'Failed to add to cart');
+                    }
+                } else {
+                    alert(`${foodName} added to cart!`);
+                    // Update cart badge
+                    if (window.updateCartCount) {
+                        window.updateCartCount();
+                    }
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                alert('Failed to add to cart: ' + error.message);
+            }
         }
 
         // Initial render

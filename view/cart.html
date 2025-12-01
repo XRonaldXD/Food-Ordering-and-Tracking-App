@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Food Ordering App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .cart-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .cart-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .cart-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .cart-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .quantity-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: none;
+            background: #4a69bd;
+            color: white;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .quantity-btn:hover {
+            background: #3c5a9d;
+            transform: scale(1.1);
+        }
+        .quantity-display {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .remove-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .remove-btn:hover {
+            color: #c0392b;
+            transform: scale(1.2);
+        }
+        .order-summary {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            position: sticky;
+            top: 100px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .summary-row:last-child {
+            border-bottom: none;
+            font-size: 1.25rem;
+            font-weight: bold;
+            padding-top: 1rem;
+        }
+        .btn-checkout {
+            background: linear-gradient(135deg, #4a69bd 0%, #3c5a9d 100%);
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        .btn-checkout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 105, 189, 0.3);
+        }
+        .btn-clear {
+            background: transparent;
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .btn-clear:hover {
+            background: #e74c3c;
+            color: white;
+        }
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+        }
+        .empty-cart i {
+            font-size: 5rem;
+            color: rgba(255, 255, 255, 0.3);
+            margin-bottom: 1rem;
+        }
+        .restaurant-badge {
+            background: rgba(74, 105, 189, 0.3);
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .modal-content {
+            background: #1a1a2e;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .modal-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .form-control, .form-control:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .form-label {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <div class="cart-container">
+        <div class="cart-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1><i class="bi bi-cart3"></i> Shopping Cart</h1>
+                    <p class="mb-0" id="restaurantInfo"></p>
+                </div>
+                <button class="btn btn-clear" onclick="clearCart()" id="clearCartBtn" style="display: none;">
+                    <i class="bi bi-trash"></i> Clear Cart
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div id="cartItems"></div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="order-summary" id="orderSummary" style="display: none;">
+                    <h3 class="mb-4">Order Summary</h3>
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="subtotalAmount">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax (8%)</span>
+                        <span id="taxAmount">$0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Delivery Fee</span>
+                        <span id="deliveryFee">$5.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total</span>
+                        <span id="totalAmount">$5.00</span>
+                    </div>
+                    <button class="btn btn-checkout" onclick="showCheckoutModal()">
+                        <i class="bi bi-credit-card"></i> Proceed to Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Checkout</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="checkoutForm">
+                        <div class="mb-3">
+                            <label class="form-label">Delivery Address *</label>
+                            <textarea class="form-control" id="deliveryAddress" rows="3" required 
+                                placeholder="Enter your complete delivery address"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="customerPhone" required 
+                                placeholder="Enter your contact number">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="completeCheckout()">
+                        <i class="bi bi-check-circle"></i> Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/checkAuth.js"></script>
+    <script>
+        let cart = null;
+        let checkoutModal = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load navbar
+            const navbarResponse = await fetch('navbar.html');
+            const navbarHtml = await navbarResponse.text();
+            document.getElementById('navbar-placeholder').innerHTML = navbarHtml;
+            await checkAuthStatus();
+
+            // Initialize modal
+            checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+
+            // Load cart
+            loadCart();
+        });
+
+        async function loadCart() {
+            try {
+                const response = await fetch('/cart');
+                if (!response.ok) throw new Error('Failed to load cart');
+                
+                cart = await response.json();
+                renderCart();
+                updateCartBadge();
+            } catch (error) {
+                console.error('Error loading cart:', error);
+                showEmptyCart();
+            }
+        }
+
+        function renderCart() {
+            const cartItemsDiv = document.getElementById('cartItems');
+            const orderSummary = document.getElementById('orderSummary');
+            const clearCartBtn = document.getElementById('clearCartBtn');
+            const restaurantInfo = document.getElementById('restaurantInfo');
+
+            if (!cart || !cart.items || cart.items.length === 0) {
+                showEmptyCart();
+                orderSummary.style.display = 'none';
+                clearCartBtn.style.display = 'none';
+                restaurantInfo.textContent = '';
+                return;
+            }
+
+            // Show restaurant info
+            if (cart.restaurant) {
+                restaurantInfo.innerHTML = `<span class="restaurant-badge"><i class="bi bi-shop"></i> ${cart.restaurant}</span>`;
+            }
+
+            // Show clear button
+            clearCartBtn.style.display = 'block';
+
+            // Render items
+            let itemsHtml = '';
+            cart.items.forEach(item => {
+                if (!item.foodId) return;
+                
+                itemsHtml += `
+                    <div class="cart-item">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="mb-2">${item.foodId.name}</h5>
+                                <p class="mb-1 text-muted">${item.foodId.description || ''}</p>
+                                <p class="mb-0"><strong>$${item.price.toFixed(2)}</strong> each</p>
+                                ${item.notes ? `<p class="mb-0 text-muted"><small><i class="bi bi-sticky"></i> ${item.notes}</small></p>` : ''}
+                            </div>
+                            <div class="col-md-3">
+                                <div class="quantity-controls">
+                                    <button class="quantity-btn" onclick="updateQuantity('${item._id}', ${item.quantity - 1})">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <span class="quantity-display">${item.quantity}</span>
+                                    <button class="quantity-btn" onclick="updateQuantity('${item._id}', ${item.quantity + 1})">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <h5 class="mb-0">$${(item.price * item.quantity).toFixed(2)}</h5>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <i class="bi bi-trash remove-btn" onclick="removeItem('${item._id}')"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            cartItemsDiv.innerHTML = itemsHtml;
+
+            // Update order summary
+            document.getElementById('subtotalAmount').textContent = `$${cart.subtotal.toFixed(2)}`;
+            document.getElementById('taxAmount').textContent = `$${cart.tax.toFixed(2)}`;
+            document.getElementById('deliveryFee').textContent = `$${cart.deliveryFee.toFixed(2)}`;
+            document.getElementById('totalAmount').textContent = `$${cart.total.toFixed(2)}`;
+            orderSummary.style.display = 'block';
+        }
+
+        function showEmptyCart() {
+            const cartItemsDiv = document.getElementById('cartItems');
+            cartItemsDiv.innerHTML = `
+                <div class="empty-cart">
+                    <i class="bi bi-cart-x"></i>
+                    <h3>Your cart is empty</h3>
+                    <p class="text-muted">Add some delicious items to get started!</p>
+                    <a href="/" class="btn btn-primary mt-3">
+                        <i class="bi bi-shop"></i> Browse Restaurants
+                    </a>
+                </div>
+            `;
+        }
+
+        async function updateQuantity(itemId, newQuantity) {
+            if (newQuantity < 1) {
+                removeItem(itemId);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/cart/item/${itemId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantity: newQuantity })
+                });
+
+                if (!response.ok) throw new Error('Failed to update quantity');
+                
+                cart = await response.json();
+                renderCart();
+                updateCartBadge();
+            } catch (error) {
+                console.error('Error updating quantity:', error);
+                alert('Failed to update quantity');
+            }
+        }
+
+        async function removeItem(itemId) {
+            if (!confirm('Remove this item from cart?')) return;
+
+            try {
+                const response = await fetch(`/cart/item/${itemId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to remove item');
+                
+                cart = await response.json();
+                renderCart();
+                updateCartBadge();
+            } catch (error) {
+                console.error('Error removing item:', error);
+                alert('Failed to remove item');
+            }
+        }
+
+        async function clearCart() {
+            if (!confirm('Clear all items from cart?')) return;
+
+            try {
+                const response = await fetch('/cart/clear', {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to clear cart');
+                
+                loadCart();
+            } catch (error) {
+                console.error('Error clearing cart:', error);
+                alert('Failed to clear cart');
+            }
+        }
+
+        function showCheckoutModal() {
+            checkoutModal.show();
+        }
+
+        async function completeCheckout() {
+            const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+
+            if (!deliveryAddress || !customerPhone) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/cart/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deliveryAddress, customerPhone })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert(data.error || 'Failed to complete checkout');
+                    return;
+                }
+
+                checkoutModal.hide();
+                alert('Orders placed successfully! You can track them in your profile.');
+                window.location.href = '/profile';
+            } catch (error) {
+                console.error('Error during checkout:', error);
+                alert('Failed to complete checkout');
+            }
+        }
+
+        async function updateCartBadge() {
+            try {
+                const response = await fetch('/cart/count');
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count > 99 ? '99+' : data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating cart badge:', error);
+            }
+        }
+    </script>
+</body>
+</html>

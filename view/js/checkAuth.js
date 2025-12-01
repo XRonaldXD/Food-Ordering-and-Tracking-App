@@ -21,6 +21,14 @@ async function checkAuthStatus() {
                 updateUnreadCount();
             }
 
+            // Show cart for logged-in users
+            const cartItem = document.getElementById('cartItem');
+            if (cartItem) {
+                cartItem.style.display = 'block';
+                // Load cart count
+                updateCartCount();
+            }
+
             // Show role-specific menu items
             if (data.user.role === 'merchant' || data.user.role === 'admin') {
                 const merchantItem = document.getElementById('merchantDashboardItem');
@@ -49,6 +57,27 @@ async function checkAuthStatus() {
     }
 }
 
+// Update cart count
+async function updateCartCount() {
+    try {
+        const response = await fetch('/cart/count');
+        if (response.ok) {
+            const data = await response.json();
+            const badge = document.getElementById('cartBadge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count > 99 ? '99+' : data.count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching cart count:', error);
+    }
+}
+
 // Update unread message count
 async function updateUnreadCount() {
     try {
@@ -72,9 +101,10 @@ async function updateUnreadCount() {
 
 checkAuthStatus();
 
-// Update unread count every 30 seconds if user is logged in
+// Update unread count and cart count every 30 seconds if user is logged in
 setInterval(() => {
     if (isUserLoggedIn) {
         updateUnreadCount();
+        updateCartCount();
     }
 }, 30000);

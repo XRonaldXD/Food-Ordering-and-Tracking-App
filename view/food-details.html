@@ -194,13 +194,22 @@
             <!-- Middle and Right Column -->
             <div class="col-md-8">
                 <h3>Orders</h3>
-                <button class="btn btn-primary mb-3" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#createOrderModal"
-                        id="addOrderButton">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Place Your Order
-                </button>
+                <div class="mb-3">
+                    <button class="btn btn-primary me-2" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#createOrderModal"
+                            id="addOrderButton">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Place Your Order
+                    </button>
+                    <button class="btn btn-success" 
+                            onclick="addToCart()"
+                            id="addToCartButton"
+                            style="display: none;">
+                        <i class="bi bi-cart-plus me-2"></i>
+                        Add to Cart
+                    </button>
+                </div>
                 <div id="ordersList"></div>
             </div>
         </div>
@@ -216,6 +225,36 @@
             </div>
             <div class="toast-body" id="toastBody">
                 Message
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Cart Modal -->
+    <div class="modal fade" id="addToCartModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Add to Cart</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="cartForm">
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="cartQuantity" min="1" value="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Special Instructions (Optional)</label>
+                            <textarea class="form-control" id="cartNotes" rows="4" placeholder="Any special requests or dietary requirements..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="confirmAddToCart()">
+                        <i class="bi bi-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -250,6 +289,29 @@
     </div>
 
     <script>
+    // Show toast notification
+    function showToast(title, message, type = 'info') {
+        const toastEl = document.getElementById('liveToast');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastBody = document.getElementById('toastBody');
+        const toastIcon = document.getElementById('toastIcon');
+
+        toastTitle.textContent = title;
+        toastBody.textContent = message;
+
+        // Set icon based on type
+        if (type === 'success') {
+            toastIcon.className = 'bi bi-check-circle-fill text-success me-2';
+        } else if (type === 'error') {
+            toastIcon.className = 'bi bi-exclamation-circle-fill text-danger me-2';
+        } else {
+            toastIcon.className = 'bi bi-info-circle-fill text-info me-2';
+        }
+
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+    }
+
     // Fetch food details dynamically
     async function fetchFoodDetails() {
         try {
@@ -453,20 +515,127 @@
         try {
             const response = await fetch('/auth/me');
             const addOrderButton = document.getElementById('addOrderButton');
+            const addToCartButton = document.getElementById('addToCartButton');
             
             if (response.ok) {
                 const data = await response.json();
                 if (data.loggedIn) {
                     addOrderButton.style.display = 'inline-block';
+                    addToCartButton.style.display = 'inline-block';
                 } else {
                     addOrderButton.style.display = 'none';
+                    addToCartButton.style.display = 'none';
                 }
             } else {
                 addOrderButton.style.display = 'none';
+                addToCartButton.style.display = 'none';
             }
         } catch (error) {
             console.error('Error checking login status:', error);
             document.getElementById('addOrderButton').style.display = 'none';
+            document.getElementById('addToCartButton').style.display = 'none';
+        }
+    }
+
+    // Add to cart function
+    async function addToCart() {
+        try {
+            // Check authentication first
+            const authResponse = await fetch('/auth/me');
+            if (!authResponse.ok) {
+                alert('You must be logged in to add items to cart.');
+                window.location.href = '/login';
+                return;
+            }
+
+            // Show the add to cart modal
+            const addToCartModal = new bootstrap.Modal(document.getElementById('addToCartModal'));
+            addToCartModal.show();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to open cart modal');
+        }
+    }
+
+    // Confirm add to cart
+    async function confirmAddToCart() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const foodId = params.get('id');
+
+            if (!foodId) {
+                alert('Invalid food item.');
+                return;
+            }
+
+            const quantity = document.getElementById('cartQuantity').value;
+            const notes = document.getElementById('cartNotes').value;
+
+            if (!quantity || quantity < 1) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+
+            const cartData = {
+                foodId: foodId,
+                quantity: parseInt(quantity),
+                notes: notes
+            };
+
+            const response = await fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(cartData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (data.differentRestaurant) {
+                    const confirmSwitch = confirm(
+                        `${data.error}\n\nCurrent cart: ${data.currentRestaurant}\nNew item: ${data.newRestaurant}\n\nWould you like to clear your cart and add this item?`
+                    );
+                    if (confirmSwitch) {
+                        // Clear cart and try again
+                        await fetch('/cart/clear', { method: 'DELETE' });
+                        const retryResponse = await fetch('/cart/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(cartData)
+                        });
+                        if (!retryResponse.ok) {
+                            throw new Error('Failed to add item after clearing cart');
+                        }
+                    } else {
+                        return;
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to add to cart');
+                }
+            }
+
+            // Close modal
+            const addToCartModal = bootstrap.Modal.getInstance(document.getElementById('addToCartModal'));
+            if (addToCartModal) {
+                addToCartModal.hide();
+            }
+            
+            // Reset form
+            document.getElementById('cartQuantity').value = 1;
+            document.getElementById('cartNotes').value = '';
+            
+            // Show success message
+            showToast('Success!', 'Item added to cart!', 'success');
+            
+            // Update cart badge
+            if (window.updateCartCount) {
+                window.updateCartCount();
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            alert('Failed to add to cart: ' + error.message);
         }
     }
 
