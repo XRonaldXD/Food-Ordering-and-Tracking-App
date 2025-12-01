@@ -62,7 +62,7 @@
         }
 
         .text-muted {
-            color: #b0b0b0 !important;
+            color: #ffffff !important;
         }
 
         .modal-content {
@@ -206,6 +206,20 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi me-2" id="toastIcon"></i>
+                <strong class="me-auto" id="toastTitle">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                Message
+            </div>
+        </div>
+    </div>
+
     <!-- Create Order Modal -->
      <div class="modal fade" id="createOrderModal" tabindex="-1">
         <div class="modal-dialog">
@@ -271,27 +285,7 @@
 
     async function loadOrders(foodId) {
         try {
-            const response = await fetch('/orders');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const allOrders = await response.json();
-
-            // Filter orders for this food (handle both string and populated object)
-            const orders = allOrders.filter(o => {
-                if (!o.foodId) return false;
-                const orderFoodId = typeof o.foodId === 'object' ? o.foodId._id : o.foodId;
-                return orderFoodId === foodId;
-            });
-            
-            const ordersList = document.getElementById('ordersList');
-
-            if (orders.length === 0) {
-                ordersList.innerHTML = '<p class="text-muted">No orders yet. Be the first to order!</p>';
-                return;
-            }
-
-            // Fetch current logged-in user once
+            // Fetch current logged-in user first
             if (!currentUser) {
                 try {
                     const meRes = await fetch('/auth/me');
@@ -306,43 +300,39 @@
                 }
             }
 
-            // Build order HTML with real usernames
-            const orderElements = await Promise.all(orders.map(async (order) => {
-                let displayName = 'Anonymous';
+            const response = await fetch('/orders');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const allOrders = await response.json();
 
-                // Handle populated createdBy object
-                if (order.createdBy && typeof order.createdBy === 'object') {
-                    displayName = order.createdBy.name || order.createdBy.email.split('@')[0];
-                }
-                // If order already has createdByName (future-proof), use it
-                else if (order.createdByName) {
-                    displayName = order.createdByName;
-                }
-                // Otherwise, fetch user by createdBy ID
-                else if (order.createdBy) {
-                    const userId = order.createdBy;
+            // Filter orders for this food AND current user only
+            const orders = allOrders.filter(o => {
+                if (!o.foodId) return false;
+                const orderFoodId = typeof o.foodId === 'object' ? o.foodId._id : o.foodId;
+                const createdById = typeof o.createdBy === 'object' ? o.createdBy._id : o.createdBy;
+                
+                // Show only orders that match the food AND belong to current user
+                return orderFoodId === foodId && 
+                       currentUser && 
+                       (createdById === currentUser._id || createdById === currentUser.id);
+            });
+            
+            const ordersList = document.getElementById('ordersList');
 
-                    // Use cache if already fetched
-                    if (userCache.has(userId)) {
-                        const user = userCache.get(userId);
-                        displayName = user.name || user.username || user.email.split('@')[0];
-                    } else {
-                        try {
-                            const userRes = await fetch(`/user/${userId}`);
-                            if (userRes.ok) {
-                                const user = await userRes.json();
-                                userCache.set(userId, user);
-                                displayName = user.name || user.username || user.email.split('@')[0];
-                            }
-                        } catch (e) {
-                            displayName = 'Unknown User';
-                        }
-                    }
-                }
+            if (orders.length === 0) {
+                ordersList.innerHTML = '<p class="text-muted">You haven\'t placed any orders yet. Be the first to order!</p>';
+                return;
+            }
 
-                const createdById = typeof order.createdBy === 'object' ? order.createdBy._id : order.createdBy;
-                const isOwnOrder = currentUser && 
-                    (createdById === currentUser._id || createdById === currentUser.id);
+            // Build order HTML (all orders shown are the user's own orders)
+            const orderElements = orders.map((order) => {
+                let displayName = 'You';
+
+                // Get display name from currentUser
+                if (currentUser) {
+                    displayName = currentUser.name || currentUser.email.split('@')[0];
+                }
 
                 const statusColors = {
                     'pending': 'warning',
@@ -358,12 +348,11 @@
                 const statusColor = statusColors[order.status] || 'secondary';
 
                 return `
-                    <div class="mb-4 p-4 rounded" style="background: #2a2a2a; border-left: 5px solid ${isOwnOrder ? '#ff6b6b' : '#444'}">
+                    <div class="mb-4 p-4 rounded" style="background: #2a2a2a; border-left: 5px solid #ff6b6b">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <p class="mb-1">
-                                    <strong>${displayName}</strong>
-                                    ${isOwnOrder ? '<small class="text-primary ms-2">(You)</small>' : ''}
+                                    <strong>Your Order</strong>
                                     <span class="badge bg-${statusColor} ms-2">${order.status.toUpperCase().replace(/_/g, ' ')}</span>
                                 </p>
                                 <p class="mb-2"><strong>Quantity:</strong> ${order.quantity}</p>
@@ -377,7 +366,7 @@
                         </div>
                     </div>
                 `;
-            }));
+            });
 
             ordersList.innerHTML = orderElements.join('');
 
@@ -448,8 +437,8 @@
             document.getElementById('orderQuantity').value = 1;
             document.getElementById('orderNotes').value = '';
             
-            // Show success message
-            alert('Order placed successfully!');
+            // Show success toast
+            showToast('Success!', 'Order placed successfully!', 'success');
             
             // Refresh the page to show new order
             fetchFoodDetails();

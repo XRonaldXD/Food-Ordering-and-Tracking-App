@@ -22,7 +22,6 @@ const createFood = async (req, res) => {
             name: req.body.name,
             description: req.body.description,
             price: req.body.price,
-            category: req.body.category,
             restaurant: req.user.restaurantName,  // Auto-populate from user's restaurant name
             createdBy: req.user._id
         });
@@ -71,7 +70,6 @@ const updateFood = async (req, res) => {
             name: req.body.name,
             description: req.body.description,
             price: req.body.price,
-            category: req.body.category
         };
 
         await Food.findByIdAndUpdate(id, updateData, { new: true });
