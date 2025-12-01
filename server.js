@@ -34,6 +34,7 @@ app.use('/orders',require('./routes/orders'));
 app.use('/merchant',require('./routes/merchant'));
 app.use('/driver',require('./routes/driver'));
 app.use('/admin',require('./routes/admin'));
+app.use('/messages',require('./routes/messages'));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'index.html'));
@@ -57,6 +58,10 @@ app.get('/admin-dashboard', isLoggedIn, (req, res) => {
 
 app.get('/driver-dashboard', isLoggedIn, (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'driver-dashboard.html'));
+});
+
+app.get('/messages', isLoggedIn, (req, res) => {
+    res.sendFile(path.join(__dirname, 'view', 'messages.html'));
 });
 
 

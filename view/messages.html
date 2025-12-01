@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Food Ordering & Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+        }
+
+        .messages-container {
+            height: calc(100vh - 100px);
+            max-height: 800px;
+        }
+
+        .conversations-panel {
+            background: #1f1f1f;
+            border-right: 1px solid #2d2d2d;
+            border-radius: 20px 0 0 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .chat-panel {
+            background: #1a1a1a;
+            border-radius: 0 20px 20px 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .conversation-item {
+            padding: 1rem;
+            border-bottom: 1px solid #2d2d2d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #1f1f1f;
+        }
+
+        .conversation-item:hover {
+            background: #2a2a2a;
+        }
+
+        .conversation-item.active {
+            background: #2d2d2d;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .conversation-item .user-name {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .conversation-item .last-message {
+            font-size: 0.9rem;
+            color: #b0b0b0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-item .time {
+            font-size: 0.75rem;
+            color: #808080;
+        }
+
+        .conversation-item .unread-badge {
+            background: #ff6b6b;
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .chat-header {
+            padding: 1rem 1.5rem;
+            background: #1f1f1f;
+            border-bottom: 1px solid #2d2d2d;
+            border-radius: 0 20px 0 0;
+        }
+
+        .chat-header h5 {
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .chat-header .user-status {
+            font-size: 0.85rem;
+            color: #ffffff;
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background: #1a1a1a;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 15px;
+            word-wrap: break-word;
+        }
+
+        .message-bubble.sent {
+            background: #ff6b6b;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-bubble.received {
+            background: #2d2d2d;
+            color: #ffffff;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .message-bubble.received .message-time {
+            color: #808080;
+        }
+
+        .message-input-area {
+            padding: 1rem 1.5rem;
+            background: #1f1f1f;
+            border-top: 1px solid #2d2d2d;
+            border-radius: 0 0 20px 0;
+        }
+
+        .message-input {
+            background: #2a2a2a;
+            border: 2px solid #3d3d3d;
+            color: #ffffff;
+            border-radius: 25px;
+            padding: 0.75rem 1.25rem;
+            resize: none;
+        }
+
+        .message-input:focus {
+            background: #333333;
+            border-color: #ff6b6b;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.25);
+            outline: none;
+        }
+
+        .btn-send {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-send:hover {
+            background: #ee5a52;
+            transform: scale(1.1);
+        }
+
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #b0b0b0;
+        }
+
+        .empty-chat i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .role-customer { background: #17a2b8; color: white; }
+        .role-merchant { background: #fd7e14; color: white; }
+        .role-driver { background: #28a745; color: white; }
+        .role-admin { background: #dc3545; color: white; }
+
+        .new-message-btn {
+            background: #ff6b6b;
+            border: none;
+            color: white;
+            width: 100%;
+            padding: 0.75rem;
+            margin: 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .new-message-btn:hover {
+            background: #ee5a52;
+            transform: translateY(-2px);
+        }
+
+        .modal-content {
+            background: #1f1f1f;
+            border: 1px solid #2d2d2d;
+            color: #ffffff;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #2d2d2d;
+        }
+
+        .form-control, .form-select {
+            background: #2a2a2a;
+            border: 2px solid #3d3d3d;
+            color: #ffffff;
+            border-radius: 10px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: #333333;
+            border-color: #ff6b6b;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.25);
+        }
+
+        .form-label {
+            color: #b0b0b0;
+            font-weight: 600;
+        }
+
+        .btn-close {
+            filter: invert(1);
+        }
+
+        .contact-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #2d2d2d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            background: #2a2a2a;
+        }
+
+        .order-reference {
+            background: #2a2a2a;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: #b0b0b0;
+        }
+
+        p {
+            color: #ffffff;
+        }
+
+        small {
+            color: #ffffff;
+        }
+
+        /* Scrollbar styling */
+        .conversations-panel::-webkit-scrollbar,
+        .messages-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .conversations-panel::-webkit-scrollbar-track,
+        .messages-area::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .conversations-panel::-webkit-scrollbar-thumb,
+        .messages-area::-webkit-scrollbar-thumb {
+            background: #3d3d3d;
+            border-radius: 4px;
+        }
+
+        .conversations-panel::-webkit-scrollbar-thumb:hover,
+        .messages-area::-webkit-scrollbar-thumb:hover {
+            background: #4d4d4d;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div id="navbar"></div>
+
+    <div class="container my-4">
+        <div class="row messages-container">
+            <!-- Conversations Panel -->
+            <div class="col-md-4 p-0">
+                <div class="conversations-panel">
+                    <div class="p-3 border-bottom" style="border-color: #2d2d2d;">
+                        <h4 class="mb-0"><i class="bi bi-chat-dots"></i> Messages</h4>
+                        <small style="color: #b0b0b0;">Chat with customers, merchants, and drivers</small>
+                    </div>
+                    <button class="new-message-btn" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                        <i class="bi bi-plus-circle"></i> New Message
+                    </button>
+                    <div id="conversationsList"></div>
+                </div>
+            </div>
+
+            <!-- Chat Panel -->
+            <div class="col-md-8 p-0">
+                <div class="chat-panel" id="chatPanel">
+                    <div class="empty-chat">
+                        <i class="bi bi-chat-left-text"></i>
+                        <h4>Select a conversation</h4>
+                        <p>Choose a conversation from the list to start messaging</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Message Modal -->
+    <div class="modal fade" id="newMessageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Contact</label>
+                        <select class="form-select" id="newMessageContact">
+                            <option value="">Loading contacts...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" id="newMessageText" rows="4" placeholder="Type your message..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="sendNewMessage()" style="background: #ff6b6b; border: none;">
+                        <i class="bi bi-send"></i> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        let currentUser = null;
+        let currentConversation = null;
+        let currentReceiver = null;
+        let conversations = [];
+        let contacts = [];
+        let messagePollingInterval = null;
+
+        // Load navbar
+        async function loadNavbar() {
+            try {
+                const response = await fetch('navbar.html');
+                if (!response.ok) throw new Error('Failed to load navbar');
+                document.getElementById('navbar').innerHTML = await response.text();
+            } catch (error) {
+                console.error('Error loading navbar:', error);
+            }
+        }
+
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/auth/me');
+                if (!response.ok) {
+                    window.location.href = '/login';
+                    return false;
+                }
+                const data = await response.json();
+                if (data.loggedIn && data.user) {
+                    currentUser = data.user;
+                    return true;
+                }
+                window.location.href = '/login';
+                return false;
+            } catch (error) {
+                console.error('Error checking auth:', error);
+                window.location.href = '/login';
+                return false;
+            }
+        }
+
+        // Load conversations
+        async function loadConversations() {
+            try {
+                const response = await fetch('/messages/conversations');
+                if (!response.ok) throw new Error('Failed to load conversations');
+                conversations = await response.json();
+                renderConversations();
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                document.getElementById('conversationsList').innerHTML = 
+                    '<p class="text-center text-muted p-3">No conversations yet</p>';
+            }
+        }
+
+        // Render conversations list
+        function renderConversations() {
+            const container = document.getElementById('conversationsList');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted p-3">No conversations yet</p>';
+                return;
+            }
+
+            container.innerHTML = conversations.map(conv => {
+                const isActive = currentConversation === conv.conversationId;
+                const user = conv.otherUser;
+                const roleClass = `role-${user.role}`;
+                
+                return `
+                    <div class="conversation-item ${isActive ? 'active' : ''}" onclick="openConversation('${conv.conversationId}', '${user._id}')">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div style="flex: 1;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="user-name">${user.name}</span>
+                                    <span class="role-badge ${roleClass}">${user.role}</span>
+                                </div>
+                                ${user.restaurantName ? `<small style="color: #808080;"><i class="bi bi-shop"></i> ${user.restaurantName}</small>` : ''}
+                                <div class="last-message">${conv.lastMessage.message}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="time">${formatTime(conv.lastMessage.createdAt)}</div>
+                                ${conv.unreadCount > 0 ? `<span class="unread-badge mt-1">${conv.unreadCount}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Open conversation
+        async function openConversation(conversationId, userId) {
+            currentConversation = conversationId;
+            currentReceiver = userId;
+            
+            renderConversations(); // Update active state
+            await loadMessages(userId);
+            
+            // Start polling for new messages
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+            }
+            messagePollingInterval = setInterval(() => loadMessages(userId, true), 3000);
+        }
+
+        // Load messages
+        async function loadMessages(userId, silent = false) {
+            try {
+                const response = await fetch(`/messages/conversation/${userId}`);
+                if (!response.ok) throw new Error('Failed to load messages');
+                const messages = await response.json();
+                renderChat(messages, userId, silent);
+            } catch (error) {
+                if (!silent) {
+                    console.error('Error loading messages:', error);
+                }
+            }
+        }
+
+        // Render chat
+        function renderChat(messages, receiverId, isUpdate = false) {
+            const chatPanel = document.getElementById('chatPanel');
+            const receiver = conversations.find(c => c.otherUser._id === receiverId)?.otherUser;
+            
+            if (!receiver) return;
+
+            const roleClass = `role-${receiver.role}`;
+            
+            // If it's an update (polling), only update messages area to preserve input
+            if (isUpdate) {
+                const messagesArea = document.getElementById('messagesArea');
+                if (messagesArea) {
+                    const previousScrollHeight = messagesArea.scrollHeight;
+                    const wasScrolledToBottom = messagesArea.scrollTop + messagesArea.clientHeight >= previousScrollHeight - 50;
+                    
+                    messagesArea.innerHTML = messages.map(msg => renderMessage(msg)).join('');
+                    
+                    // Only scroll to bottom if user was already at bottom
+                    if (wasScrolledToBottom) {
+                        scrollToBottom();
+                    }
+                }
+                return;
+            }
+            
+            // Initial render - render entire chat panel
+            chatPanel.innerHTML = `
+                <div class="chat-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <h5>${receiver.name}</h5>
+                        <span class="role-badge ${roleClass}">${receiver.role}</span>
+                    </div>
+                    ${receiver.restaurantName ? `<div class="user-status"><i class="bi bi-shop"></i> ${receiver.restaurantName}</div>` : ''}
+                    <div class="user-status">${receiver.email}</div>
+                </div>
+                <div class="messages-area" id="messagesArea">
+                    ${messages.map(msg => renderMessage(msg)).join('')}
+                </div>
+                <div class="message-input-area">
+                    <div class="d-flex gap-2">
+                        <textarea class="form-control message-input" id="messageInput" rows="2" 
+                            placeholder="Type your message..." onkeypress="handleKeyPress(event)"></textarea>
+                        <button class="btn-send" onclick="sendMessage()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            scrollToBottom();
+        }
+
+        // Render single message
+        function renderMessage(msg) {
+            const isSent = msg.sender._id === currentUser._id || msg.sender._id === currentUser.id;
+            const bubbleClass = isSent ? 'sent' : 'received';
+            
+            return `
+                <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'}">
+                    <div class="message-bubble ${bubbleClass}">
+                        ${msg.orderId ? `
+                            <div class="order-reference">
+                                <i class="bi bi-receipt"></i> Order: ${msg.orderId.foodId?.name || 'N/A'}
+                                <br><small>Status: ${msg.orderId.status}</small>
+                            </div>
+                        ` : ''}
+                        <div>${msg.message}</div>
+                        <small class="message-time">${formatTime(msg.createdAt)}</small>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || !currentReceiver) return;
+
+            try {
+                const response = await fetch('/messages/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        receiverId: currentReceiver,
+                        message: message
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to send message');
+
+                input.value = '';
+                await loadMessages(currentReceiver);
+                await loadConversations(); // Update conversation list
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message');
+            }
+        }
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Load contacts for new message
+        async function loadContacts() {
+            try {
+                const response = await fetch('/messages/contacts');
+                if (!response.ok) throw new Error('Failed to load contacts');
+                contacts = await response.json();
+                
+                const select = document.getElementById('newMessageContact');
+                if (contacts.length === 0) {
+                    select.innerHTML = '<option value="">No contacts available</option>';
+                    return;
+                }
+
+                select.innerHTML = '<option value="">Select a contact...</option>' +
+                    contacts.map(contact => {
+                        const label = contact.restaurantName ? 
+                            `${contact.name} (${contact.role} - ${contact.restaurantName})` :
+                            `${contact.name} (${contact.role})`;
+                        return `<option value="${contact._id}">${label}</option>`;
+                    }).join('');
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+            }
+        }
+
+        // Send new message
+        async function sendNewMessage() {
+            const receiverId = document.getElementById('newMessageContact').value;
+            const message = document.getElementById('newMessageText').value.trim();
+
+            if (!receiverId || !message) {
+                alert('Please select a contact and enter a message');
+                return;
+            }
+
+            try {
+                const response = await fetch('/messages/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ receiverId, message })
+                });
+
+                if (!response.ok) throw new Error('Failed to send message');
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newMessageModal'));
+                modal.hide();
+
+                // Reset form
+                document.getElementById('newMessageContact').value = '';
+                document.getElementById('newMessageText').value = '';
+
+                // Reload conversations and open the new one
+                await loadConversations();
+                const newConv = conversations.find(c => c.otherUser._id === receiverId);
+                if (newConv) {
+                    openConversation(newConv.conversationId, receiverId);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message');
+            }
+        }
+
+        // Format time
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+            if (diff < 86400000) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            if (diff < 604800000) return date.toLocaleDateString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            const messagesArea = document.getElementById('messagesArea');
+            if (messagesArea) {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            loadNavbar();
+            const isAuth = await checkAuth();
+            if (isAuth) {
+                await loadConversations();
+                await loadContacts();
+                
+                // Refresh conversations every 10 seconds
+                setInterval(loadConversations, 10000);
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+            }
+        });
+    </script>
+
+    <script src="js/checkAuth.js"></script>
+
+</body>
+</html>
