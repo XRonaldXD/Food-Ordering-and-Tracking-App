@@ -1,6 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const User = require('../models/User');
+const systemLogger = require('../utils/systemLogger');
 
 // Configure Google OAuth Strategy
 passport.use(new GoogleStrategy({
@@ -27,6 +28,14 @@ passport.use(new GoogleStrategy({
         });
         
         console.log('New user created:', user);
+        
+        // Send welcome message to new user
+        try {
+            await systemLogger.logWelcomeMessage(user._id, user.name);
+        } catch (err) {
+            console.error('Error sending welcome message:', err);
+        }
+        
         return done(null, user);
     } catch (error) {
         console.error('Error in Google Strategy:', error);

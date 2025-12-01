@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Food = require('../models/Food');
+const systemLogger = require('../utils/systemLogger');
 
 
 const createOrder = async (req, res) => {
@@ -50,6 +51,24 @@ const createOrder = async (req, res) => {
         const populatedOrder = await Order.findById(newOrder._id)
             .populate('foodId')
             .populate('createdBy', 'name email profilePicture');
+        
+        // Send system notification to customer
+        await systemLogger.logOrderCreated(req.user._id, {
+            orderId: newOrder._id,
+            foodName: food.name,
+            restaurant: food.restaurant,
+            quantity: quantity,
+            totalAmount: totalAmount
+        });
+        
+        // Notify merchant about new order
+        await systemLogger.logMerchantOrderNotification(food.createdBy, {
+            orderId: newOrder._id,
+            foodName: food.name,
+            customerName: req.user.name,
+            quantity: quantity,
+            totalAmount: totalAmount
+        });
             
         res.status(201).json(populatedOrder);
     } catch (error) {

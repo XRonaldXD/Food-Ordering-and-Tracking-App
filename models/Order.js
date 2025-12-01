@@ -77,6 +77,38 @@ const orderSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    driverLocation: {
+        latitude: {
+            type: Number,
+            required: false
+        },
+        longitude: {
+            type: Number,
+            required: false
+        },
+        lastUpdated: {
+            type: Date,
+            required: false
+        }
+    },
+    deliveryLocation: {
+        latitude: {
+            type: Number,
+            required: false
+        },
+        longitude: {
+            type: Number,
+            required: false
+        },
+        address: {
+            type: String,
+            required: false
+        }
+    },
+    estimatedDeliveryTime: {
+        type: Date,
+        required: false
+    },
     statusHistory: [{
         status: String,
         timestamp: Date,

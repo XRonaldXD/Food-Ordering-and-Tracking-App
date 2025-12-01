@@ -471,6 +471,10 @@
                     const foodRestaurant = order.foodId && typeof order.foodId === 'object' ? order.foodId.restaurant : 'N/A';
                     const totalAmount = order.totalAmount || 0;
                     
+                    // Show tracking button for active orders
+                    const trackableStatuses = ['accepted', 'preparing', 'ready', 'out_for_delivery'];
+                    const showTracking = trackableStatuses.includes(order.status);
+                    
                     return `
                     <div class="order-item">
                         <div class="d-flex justify-content-between align-items-start">
@@ -478,11 +482,18 @@
                                 <h5 class="mb-2">${foodName}</h5>
                                 <p class="text-muted mb-2"><i class="bi bi-shop"></i> ${foodRestaurant}</p>
                                 <div class="mb-2">
-                                    <span class="badge bg-${statusColors[order.status] || 'secondary'}">${order.status.toUpperCase().replace('_', ' ')}</span>
+                                    <span class="badge bg-${statusColors[order.status] || 'secondary'}">${order.status.toUpperCase().replace(/_/g, ' ')}</span>
                                 </div>
                                 <p class="mb-2"><strong>Quantity:</strong> ${order.quantity} | <strong>Total:</strong> $${totalAmount.toFixed(2)}</p>
                                 ${order.customerNotes || order.notes ? `<p class="card-text mb-2"><strong>Notes:</strong> ${order.customerNotes || order.notes}</p>` : ''}
                                 <small class="text-muted"><i class="bi bi-calendar"></i> ${new Date(order.createdAt).toLocaleString()}</small>
+                                ${showTracking ? `
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-primary" onclick="trackOrder('${order._id}')">
+                                            <i class="bi bi-geo-alt"></i> Track Order
+                                        </button>
+                                    </div>
+                                ` : ''}
                             </div>
                             <div>
                                 <button class="btn btn-sm btn-danger" onclick="deleteOrder('${order._id}')">
@@ -496,6 +507,11 @@
                 console.error('Error loading orders:', error);
                 document.getElementById('ordersList').innerHTML = '<p class="text-center text-danger">Failed to load orders.</p>';
             }
+        }
+
+        // Track order
+        function trackOrder(orderId) {
+            window.location.href = `/order-tracking?orderId=${orderId}`;
         }
 
         // Create new food

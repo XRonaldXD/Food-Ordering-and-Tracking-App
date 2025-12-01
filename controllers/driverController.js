@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
+const systemLogger = require('../utils/systemLogger');
 
 // Get all available orders (ready for delivery)
 exports.getAvailableOrders = async (req, res) => {
@@ -74,6 +75,13 @@ exports.acceptDelivery = async (req, res) => {
             .populate('createdBy', 'name email profilePicture')
             .populate('merchantId', 'name restaurantName');
 
+        // Send system notification to customer
+        await systemLogger.logOrderOutForDelivery(order.createdBy, {
+            orderId: order._id,
+            foodName: updatedOrder.foodId.name,
+            driverName: req.user.name
+        });
+
         res.json(updatedOrder);
     } catch (error) {
         console.error('Error accepting delivery:', error);
@@ -115,6 +123,12 @@ exports.markAsDelivered = async (req, res) => {
             .populate('foodId')
             .populate('createdBy', 'name email profilePicture')
             .populate('merchantId', 'name restaurantName');
+
+        // Send system notification to customer
+        await systemLogger.logOrderDelivered(order.createdBy, {
+            orderId: order._id,
+            foodName: updatedOrder.foodId.name
+        });
 
         res.json(updatedOrder);
     } catch (error) {

@@ -6,6 +6,7 @@ const session = require('express-session');
 const passport = require('passport');
 const path = require('path');
 const port = require('./config/database').port;
+const systemLogger = require('./utils/systemLogger');
 const app = express();
 
 
@@ -60,6 +61,10 @@ app.get('/cart-page', isLoggedIn, (req, res) => {
     res.sendFile(path.join(__dirname, 'view', 'cart.html'));
 });
 
+app.get('/order-tracking', isLoggedIn, (req, res) => {
+    res.sendFile(path.join(__dirname, 'view', 'order-tracking.html'));
+});
+
 // API routes
 app.use('/auth', require('./routes/auth'));
 app.use('/foods',require('./routes/foods'));
@@ -70,11 +75,21 @@ app.use('/driver',require('./routes/driver'));
 app.use('/admin',require('./routes/admin'));
 app.use('/messages',require('./routes/messages'));
 app.use('/cart',require('./routes/cart'));
+app.use('/tracking',require('./routes/tracking'));
 
 
 mongoose.connect(process.env.URL)
-    .then(() => {
+    .then(async () => {
         console.log('MongoDB connected');
+        
+        // Initialize system user on startup
+        try {
+            await systemLogger.getSystemUser();
+            console.log('System user initialized');
+        } catch (err) {
+            console.error('Error initializing system user:', err);
+        }
+        
         app.listen(port, () => {
             console.log(`Express app listening on port ${port}`);
         });

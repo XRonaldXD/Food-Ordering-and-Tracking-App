@@ -563,6 +563,9 @@
                             <div class="time-badge mb-3">
                                 <i class="bi bi-truck"></i> In Transit
                             </div>
+                            <button class="btn btn-primary w-100 mb-2" onclick="updateLocation('${order._id}')">
+                                <i class="bi bi-geo-alt"></i> Update Location
+                            </button>
                             <button class="btn btn-deliver w-100" onclick="openDeliveryModal('${order._id}')">
                                 <i class="bi bi-check-circle"></i> Mark as Delivered
                             </button>
@@ -661,6 +664,127 @@
             }
         }
 
+        // Update driver location for tracking
+        async function updateLocation(orderId) {
+            try {
+                // Check if geolocation is available
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser');
+                    return;
+                }
+
+                // Show loading state
+                const btn = event.target;
+                const originalHTML = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
+
+                // Get current position
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        try {
+                            const { latitude, longitude } = position.coords;
+
+                            // Send location to server
+                            const response = await fetch('/tracking/location', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    orderId,
+                                    latitude,
+                                    longitude
+                                })
+                            });
+
+                            if (!response.ok) {
+                                const error = await response.json();
+                                throw new Error(error.error || 'Failed to update location');
+                            }
+
+                            // Success
+                            btn.innerHTML = '<i class="bi bi-check-circle"></i> Location Updated!';
+                            setTimeout(() => {
+                                btn.innerHTML = originalHTML;
+                                btn.disabled = false;
+                            }, 2000);
+
+                            // Also update estimated time if not set
+                            await updateEstimatedTime(orderId, 30); // Default 30 minutes
+                        } catch (error) {
+                            console.error('Error sending location:', error);
+                            alert('Failed to update location: ' + error.message);
+                            btn.innerHTML = originalHTML;
+                            btn.disabled = false;
+                        }
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        alert('Unable to get your location. Please enable location services.');
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } catch (error) {
+                console.error('Error updating location:', error);
+                alert('Failed to update location: ' + error.message);
+            }
+        }
+
+        // Update estimated delivery time
+        async function updateEstimatedTime(orderId, minutes) {
+            try {
+                await fetch(`/tracking/${orderId}/estimated-time`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estimatedMinutes: minutes })
+                });
+            } catch (error) {
+                console.error('Error updating estimated time:', error);
+            }
+        }
+
+        // Auto-update location every 30 seconds for active deliveries
+        let locationUpdateInterval = null;
+
+        function startLocationTracking() {
+            if (locationUpdateInterval) {
+                clearInterval(locationUpdateInterval);
+            }
+
+            locationUpdateInterval = setInterval(() => {
+                // Update location for all active orders
+                activeOrdersData.forEach(order => {
+                    updateLocationSilently(order._id);
+                });
+            }, 30000); // Every 30 seconds
+        }
+
+        async function updateLocationSilently(orderId) {
+            if (!navigator.geolocation) return;
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    try {
+                        const { latitude, longitude } = position.coords;
+                        await fetch('/tracking/location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ orderId, latitude, longitude })
+                        });
+                    } catch (error) {
+                        console.error('Silent location update failed:', error);
+                    }
+                },
+                (error) => console.error('Geolocation error:', error),
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+            );
+        }
+
         // Refresh all data
         async function refreshData() {
             await Promise.all([
@@ -668,6 +792,11 @@
                 loadAvailableOrders(),
                 loadActiveOrders()
             ]);
+            
+            // Start auto-location tracking if there are active orders
+            if (activeOrdersData.length > 0) {
+                startLocationTracking();
+            }
         }
 
         // Auto-refresh every 30 seconds

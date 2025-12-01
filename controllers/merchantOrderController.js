@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Food = require('../models/Food');
+const systemLogger = require('../utils/systemLogger');
 
 // Get all orders for a merchant's restaurant
 const getMerchantOrders = async (req, res) => {
@@ -119,6 +120,13 @@ const acceptOrder = async (req, res) => {
             .populate('foodId')
             .populate('createdBy', 'name email profilePicture');
 
+        // Send system notification to customer
+        await systemLogger.logOrderAccepted(order.createdBy, {
+            orderId: order._id,
+            foodName: order.foodId.name,
+            restaurant: order.foodId.restaurant
+        });
+
         res.json({ 
             message: 'Order accepted successfully',
             order: populatedOrder
@@ -165,18 +173,19 @@ const rejectOrder = async (req, res) => {
         order.rejectionReason = rejectionReason;
         order.merchantId = req.user._id;
         
-        order.statusHistory.push({
-            status: 'rejected',
-            timestamp: new Date(),
-            updatedBy: req.user.name,
-            notes: rejectionReason
-        });
-
         await order.save();
 
         const populatedOrder = await Order.findById(id)
             .populate('foodId')
             .populate('createdBy', 'name email profilePicture');
+
+        // Send system notification to customer
+        await systemLogger.logOrderRejected(order.createdBy, {
+            orderId: order._id,
+            foodName: order.foodId.name,
+            restaurant: order.foodId.restaurant,
+            reason: rejectionReason
+        });
 
         res.json({ 
             message: 'Order rejected',
@@ -218,19 +227,18 @@ const startPreparingOrder = async (req, res) => {
 
         order.status = 'preparing';
         if (merchantNotes) order.merchantNotes = merchantNotes;
-        
-        order.statusHistory.push({
-            status: 'preparing',
-            timestamp: new Date(),
-            updatedBy: req.user.name,
-            notes: merchantNotes || 'Order is being prepared'
-        });
-
         await order.save();
 
         const populatedOrder = await Order.findById(id)
             .populate('foodId')
             .populate('createdBy', 'name email profilePicture');
+
+        // Send system notification to customer
+        await systemLogger.logOrderPreparing(order.createdBy, {
+            orderId: order._id,
+            foodName: order.foodId.name,
+            restaurant: order.foodId.restaurant
+        });
 
         res.json({ 
             message: 'Order status updated to preparing',
@@ -286,6 +294,13 @@ const markOrderReady = async (req, res) => {
         const populatedOrder = await Order.findById(id)
             .populate('foodId')
             .populate('createdBy', 'name email profilePicture');
+
+        // Send system notification to customer
+        await systemLogger.logOrderReady(order.createdBy, {
+            orderId: order._id,
+            foodName: order.foodId.name,
+            restaurant: order.foodId.restaurant
+        });
 
         res.json({ 
             message: 'Order marked as ready',

@@ -2,6 +2,7 @@ const Cart = require('../models/Cart');
 const Food = require('../models/Food');
 const Order = require('../models/Order');
 const User = require('../models/User');
+const systemLogger = require('../utils/systemLogger');
 
 // Get user's cart
 exports.getCart = async (req, res) => {
@@ -87,6 +88,13 @@ exports.addToCart = async (req, res) => {
         
         await cart.save();
         await cart.populate('items.foodId');
+        
+        // Send system notification for cart item added
+        await systemLogger.logCartItemAdded(req.user._id, {
+            foodName: food.name,
+            price: food.price,
+            quantity: parseInt(quantity)
+        });
         
         res.json(cart);
     } catch (error) {
@@ -219,9 +227,20 @@ exports.checkout = async (req, res) => {
         }
         
         // Clear cart after successful checkout
+        const totalAmount = cart.total;
+        const restaurant = cart.restaurant;
+        const orderCount = createdOrders.length;
+        
         cart.items = [];
         cart.restaurant = null;
         await cart.save();
+        
+        // Send system notification for cart checkout
+        await systemLogger.logCartCheckout(req.user._id, {
+            orderCount: orderCount,
+            totalAmount: totalAmount,
+            restaurant: restaurant
+        });
         
         res.json({ 
             message: 'Orders placed successfully',
