@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -201,10 +202,25 @@
             font-weight: 600;
         }
 
-        .role-customer { background: #17a2b8; color: white; }
-        .role-merchant { background: #fd7e14; color: white; }
-        .role-driver { background: #28a745; color: white; }
-        .role-admin { background: #dc3545; color: white; }
+        .role-customer {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .role-merchant {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .role-driver {
+            background: #28a745;
+            color: white;
+        }
+
+        .role-admin {
+            background: #dc3545;
+            color: white;
+        }
 
         .new-message-btn {
             background: #ff6b6b;
@@ -237,14 +253,16 @@
             border-top: 1px solid #2d2d2d;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             background: #2a2a2a;
             border: 2px solid #3d3d3d;
             color: #ffffff;
             border-radius: 10px;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             background: #333333;
             border-color: #ff6b6b;
             color: #ffffff;
@@ -311,10 +329,23 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- Navbar -->
     <div id="navbar"></div>
+    <script>
+        async function loadNavbar() {
+            try {
+                const response = await fetch('navbar.html');
+                if (!response.ok) throw new Error('Failed to load navbar');
+                document.getElementById('navbar').innerHTML = await response.text();
+            } catch (error) {
+                console.error('Error loading navbar:', error);
+            }
+        }
+        loadNavbar();
+    </script>
 
     <div class="container my-4">
         <div class="row messages-container">
@@ -362,12 +393,14 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Message</label>
-                        <textarea class="form-control" id="newMessageText" rows="4" placeholder="Type your message..."></textarea>
+                        <textarea class="form-control" id="newMessageText" rows="4"
+                            placeholder="Type your message..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="sendNewMessage()" style="background: #ff6b6b; border: none;">
+                    <button type="button" class="btn btn-primary" onclick="sendNewMessage()"
+                        style="background: #ff6b6b; border: none;">
                         <i class="bi bi-send"></i> Send
                     </button>
                 </div>
@@ -427,7 +460,7 @@
                 renderConversations();
             } catch (error) {
                 console.error('Error loading conversations:', error);
-                document.getElementById('conversationsList').innerHTML = 
+                document.getElementById('conversationsList').innerHTML =
                     '<p class="text-center text-muted p-3">No conversations yet</p>';
             }
         }
@@ -435,7 +468,7 @@
         // Render conversations list
         function renderConversations() {
             const container = document.getElementById('conversationsList');
-            
+
             if (conversations.length === 0) {
                 container.innerHTML = '<p class="text-center text-muted p-3">No conversations yet</p>';
                 return;
@@ -445,7 +478,7 @@
                 const isActive = currentConversation === conv.conversationId;
                 const user = conv.otherUser;
                 const roleClass = `role-${user.role}`;
-                
+
                 return `
                     <div class="conversation-item ${isActive ? 'active' : ''}" onclick="openConversation('${conv.conversationId}', '${user._id}')">
                         <div class="d-flex justify-content-between align-items-start">
@@ -471,10 +504,10 @@
         async function openConversation(conversationId, userId) {
             currentConversation = conversationId;
             currentReceiver = userId;
-            
+
             renderConversations(); // Update active state
             await loadMessages(userId);
-            
+
             // Start polling for new messages
             if (messagePollingInterval) {
                 clearInterval(messagePollingInterval);
@@ -500,20 +533,20 @@
         function renderChat(messages, receiverId, isUpdate = false) {
             const chatPanel = document.getElementById('chatPanel');
             const receiver = conversations.find(c => c.otherUser._id === receiverId)?.otherUser;
-            
+
             if (!receiver) return;
 
             const roleClass = `role-${receiver.role}`;
-            
+
             // If it's an update (polling), only update messages area to preserve input
             if (isUpdate) {
                 const messagesArea = document.getElementById('messagesArea');
                 if (messagesArea) {
                     const previousScrollHeight = messagesArea.scrollHeight;
                     const wasScrolledToBottom = messagesArea.scrollTop + messagesArea.clientHeight >= previousScrollHeight - 50;
-                    
+
                     messagesArea.innerHTML = messages.map(msg => renderMessage(msg)).join('');
-                    
+
                     // Only scroll to bottom if user was already at bottom
                     if (wasScrolledToBottom) {
                         scrollToBottom();
@@ -521,7 +554,7 @@
                 }
                 return;
             }
-            
+
             // Initial render - render entire chat panel
             chatPanel.innerHTML = `
                 <div class="chat-header">
@@ -553,7 +586,7 @@
         function renderMessage(msg) {
             const isSent = msg.sender._id === currentUser._id || msg.sender._id === currentUser.id;
             const bubbleClass = isSent ? 'sent' : 'received';
-            
+
             return `
                 <div class="d-flex ${isSent ? 'justify-content-end' : 'justify-content-start'}">
                     <div class="message-bubble ${bubbleClass}">
@@ -574,7 +607,7 @@
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            
+
             if (!message || !currentReceiver) return;
 
             try {
@@ -612,7 +645,7 @@
                 const response = await fetch('/messages/contacts');
                 if (!response.ok) throw new Error('Failed to load contacts');
                 contacts = await response.json();
-                
+
                 const select = document.getElementById('newMessageContact');
                 if (contacts.length === 0) {
                     select.innerHTML = '<option value="">No contacts available</option>';
@@ -621,7 +654,7 @@
 
                 select.innerHTML = '<option value="">Select a contact...</option>' +
                     contacts.map(contact => {
-                        const label = contact.restaurantName ? 
+                        const label = contact.restaurantName ?
                             `${contact.name} (${contact.role} - ${contact.restaurantName})` :
                             `${contact.name} (${contact.role})`;
                         return `<option value="${contact._id}">${label}</option>`;
@@ -675,7 +708,7 @@
             const date = new Date(timestamp);
             const now = new Date();
             const diff = now - date;
-            
+
             if (diff < 60000) return 'Just now';
             if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
             if (diff < 86400000) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -692,13 +725,12 @@
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            loadNavbar();
+        document.addEventListener('DOMContentLoaded', async function () {
             const isAuth = await checkAuth();
             if (isAuth) {
                 await loadConversations();
                 await loadContacts();
-                
+
                 // Refresh conversations every 10 seconds
                 setInterval(loadConversations, 10000);
             }
@@ -715,4 +747,5 @@
     <script src="js/checkAuth.js"></script>
 
 </body>
+
 </html>

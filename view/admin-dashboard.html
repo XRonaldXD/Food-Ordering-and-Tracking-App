@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -139,7 +140,8 @@
             color: #ffffff;
         }
 
-        .modal-header h4, .modal-header h5 {
+        .modal-header h4,
+        .modal-header h5 {
             color: #ffffff;
         }
 
@@ -159,14 +161,16 @@
             border-top: 1px solid #2d2d2d;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             background: #2a2a2a;
             border: 2px solid #3d3d3d;
             color: #ffffff;
             border-radius: 10px;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             background: #333333;
             border-color: #667eea;
             color: #ffffff;
@@ -284,16 +288,40 @@
             color: #ffffff;
         }
 
-        .role-customer { background: #17a2b8; }
-        .role-merchant { background: #fd7e14; }
-        .role-driver { background: #28a745; }
-        .role-admin { background: #dc3545; }
+        .role-customer {
+            background: #17a2b8;
+        }
+
+        .role-merchant {
+            background: #fd7e14;
+        }
+
+        .role-driver {
+            background: #28a745;
+        }
+
+        .role-admin {
+            background: #dc3545;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Navbar -->
     <div id="navbar"></div>
+    <script>
+        async function loadNavbar() {
+            try {
+                const response = await fetch('navbar.html');
+                if (!response.ok) throw new Error('Failed to load navbar');
+                document.getElementById('navbar').innerHTML = await response.text();
+            } catch (error) {
+                console.error('Error loading navbar:', error);
+            }
+        }
+        loadNavbar();
+    </script>
 
     <div class="container-fluid my-5">
         <div class="dashboard-header">
@@ -373,7 +401,8 @@
         <!-- Management Tabs -->
         <ul class="nav nav-tabs" id="adminTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users"
+                    type="button">
                     <i class="bi bi-people"></i> Users
                 </button>
             </li>
@@ -388,7 +417,8 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics"
+                    type="button">
                     <i class="bi bi-graph-up"></i> Analytics
                 </button>
             </li>
@@ -659,12 +689,12 @@
                 const response = await fetch('/admin/stats');
                 if (!response.ok) throw new Error('Failed to load stats');
                 const stats = await response.json();
-                
+
                 document.getElementById('totalUsers').textContent = stats.users.total;
                 document.getElementById('totalOrders').textContent = stats.orders.total;
                 document.getElementById('totalFoods').textContent = stats.foods.total;
                 document.getElementById('totalRevenue').textContent = `$${stats.revenue.total}`;
-                
+
                 document.getElementById('customerCount').textContent = stats.users.customers;
                 document.getElementById('merchantCount').textContent = stats.users.merchants;
                 document.getElementById('driverCount').textContent = stats.users.drivers;
@@ -829,7 +859,7 @@
                 const response = await fetch('/admin/analytics?period=30');
                 if (!response.ok) throw new Error('Failed to load analytics');
                 const analytics = await response.json();
-                
+
                 renderOrdersChart(analytics.ordersOverTime);
                 renderTopFoods(analytics.topFoods);
                 renderTopMerchants(analytics.topMerchants);
@@ -841,7 +871,7 @@
         // Render orders chart
         function renderOrdersChart(data) {
             const ctx = document.getElementById('ordersChart').getContext('2d');
-            
+
             if (ordersChart) {
                 ordersChart.destroy();
             }
@@ -958,7 +988,7 @@
             document.getElementById('editUserName').value = user.name;
             document.getElementById('editUserRole').value = user.role;
             document.getElementById('editRestaurantName').value = user.restaurantName || '';
-            
+
             if (user.role === 'merchant') {
                 document.getElementById('restaurantNameGroup').style.display = 'block';
             }
@@ -967,7 +997,7 @@
         }
 
         // Handle role change
-        document.getElementById('editUserRole').addEventListener('change', function() {
+        document.getElementById('editUserRole').addEventListener('change', function () {
             if (this.value === 'merchant') {
                 document.getElementById('restaurantNameGroup').style.display = 'block';
             } else {
@@ -1132,34 +1162,34 @@
         }
 
         // Search filters
-        document.getElementById('userSearch').addEventListener('input', function() {
+        document.getElementById('userSearch').addEventListener('input', function () {
             const term = this.value.toLowerCase();
-            const filtered = allUsers.filter(u => 
-                u.name.toLowerCase().includes(term) || 
+            const filtered = allUsers.filter(u =>
+                u.name.toLowerCase().includes(term) ||
                 u.email.toLowerCase().includes(term)
             );
             renderUsers(filtered);
         });
 
-        document.getElementById('orderSearch').addEventListener('input', function() {
+        document.getElementById('orderSearch').addEventListener('input', function () {
             const term = this.value.toLowerCase();
-            const filtered = allOrders.filter(o => 
-                o.createdBy.name.toLowerCase().includes(term) || 
+            const filtered = allOrders.filter(o =>
+                o.createdBy.name.toLowerCase().includes(term) ||
                 o.foodId.name.toLowerCase().includes(term)
             );
             renderOrders(filtered);
         });
 
-        document.getElementById('orderStatusFilter').addEventListener('change', function() {
+        document.getElementById('orderStatusFilter').addEventListener('change', function () {
             const status = this.value;
             const filtered = status ? allOrders.filter(o => o.status === status) : allOrders;
             renderOrders(filtered);
         });
 
-        document.getElementById('foodSearch').addEventListener('input', function() {
+        document.getElementById('foodSearch').addEventListener('input', function () {
             const term = this.value.toLowerCase();
-            const filtered = allFoods.filter(f => 
-                f.name.toLowerCase().includes(term) || 
+            const filtered = allFoods.filter(f =>
+                f.name.toLowerCase().includes(term) ||
                 f.restaurant.toLowerCase().includes(term)
             );
             renderFoods(filtered);
@@ -1178,8 +1208,7 @@
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            loadNavbar();
+        document.addEventListener('DOMContentLoaded', async function () {
             const hasAccess = await checkAdminAccess();
             if (hasAccess) {
                 await loadStats();
@@ -1194,4 +1223,5 @@
     <script src="js/checkAuth.js"></script>
 
 </body>
+
 </html>

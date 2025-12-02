@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -229,14 +230,16 @@
             color: #ffffff;
         }
 
-        .form-control, .form-select {
+        .form-control,
+        .form-select {
             background: #2a2a2a;
             border: 2px solid #3d3d3d;
             color: #ffffff;
             border-radius: 10px;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             background: #333333;
             border-color: #28a745;
             color: #ffffff;
@@ -273,11 +276,23 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- Navbar -->
     <div id="navbar"></div>
-
+    <script>
+        async function loadNavbar() {
+            try {
+                const response = await fetch('navbar.html');
+                if (!response.ok) throw new Error('Failed to load navbar');
+                document.getElementById('navbar').innerHTML = await response.text();
+            } catch (error) {
+                console.error('Error loading navbar:', error);
+            }
+        }
+        loadNavbar();
+    </script>
     <div class="container-fluid my-5">
         <div class="dashboard-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -328,7 +343,8 @@
         <!-- Tabs -->
         <ul class="nav nav-tabs" id="driverTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button">
+                <button class="nav-link active" id="available-tab" data-bs-toggle="tab" data-bs-target="#available"
+                    type="button">
                     <i class="bi bi-basket"></i> Available Orders
                 </button>
             </li>
@@ -392,7 +408,8 @@
                     <input type="hidden" id="deliveryOrderId">
                     <div class="mb-3">
                         <label class="form-label">Delivery Notes (Optional)</label>
-                        <textarea class="form-control" id="deliveryNotes" rows="3" placeholder="Add any notes about the delivery..."></textarea>
+                        <textarea class="form-control" id="deliveryNotes" rows="3"
+                            placeholder="Add any notes about the delivery..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -449,7 +466,7 @@
                 const response = await fetch('/driver/stats');
                 if (!response.ok) throw new Error('Failed to load stats');
                 const stats = await response.json();
-                
+
                 document.getElementById('activeDeliveries').textContent = stats.activeDeliveries;
                 document.getElementById('totalDeliveries').textContent = stats.totalDeliveries;
                 document.getElementById('todayDeliveries').textContent = stats.todayDeliveries;
@@ -475,7 +492,7 @@
         // Render available orders
         function renderAvailableOrders() {
             const container = document.getElementById('availableOrders');
-            
+
             if (availableOrdersData.length === 0) {
                 container.innerHTML = '<div class="empty-state"><i class="bi bi-basket"></i><h4>No orders available</h4><p>Check back soon for new delivery opportunities</p></div>';
                 return;
@@ -521,7 +538,7 @@
                 const orders = await response.json();
                 activeOrdersData = orders.filter(o => o.status === 'out_for_delivery');
                 historyOrdersData = orders.filter(o => o.status === 'delivered');
-                
+
                 renderActiveOrders();
                 renderHistoryOrders();
             } catch (error) {
@@ -532,7 +549,7 @@
         // Render active orders
         function renderActiveOrders() {
             const container = document.getElementById('activeOrders');
-            
+
             if (activeOrdersData.length === 0) {
                 container.innerHTML = '<div class="empty-state"><i class="bi bi-truck"></i><h4>No active deliveries</h4><p>Accept an order to start delivering</p></div>';
                 return;
@@ -578,7 +595,7 @@
         // Render history orders
         function renderHistoryOrders() {
             const container = document.getElementById('historyOrders');
-            
+
             if (historyOrdersData.length === 0) {
                 container.innerHTML = '<div class="empty-state"><i class="bi bi-clock-history"></i><h4>No delivery history</h4><p>Your completed deliveries will appear here</p></div>';
                 return;
@@ -792,7 +809,7 @@
                 loadAvailableOrders(),
                 loadActiveOrders()
             ]);
-            
+
             // Start auto-location tracking if there are active orders
             if (activeOrdersData.length > 0) {
                 startLocationTracking();
@@ -803,8 +820,7 @@
         setInterval(refreshData, 30000);
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', async function() {
-            loadNavbar();
+        document.addEventListener('DOMContentLoaded', async function () {
             const hasAccess = await checkDriverAccess();
             if (hasAccess) {
                 await refreshData();
@@ -815,4 +831,5 @@
     <script src="js/checkAuth.js"></script>
 
 </body>
+
 </html>
