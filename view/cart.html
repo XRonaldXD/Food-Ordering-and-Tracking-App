@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart - Food Ordering App</title>
+    <title>Shopping Cart - Food Ordering & Tracking</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -18,9 +18,10 @@
             padding: 0 1rem;
         }
         .cart-header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
+            background: #1f1f1f;
+            border: 1px solid #2d2d2d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
             padding: 2rem;
             margin-bottom: 2rem;
         }
@@ -132,6 +133,11 @@
             color: rgba(255, 255, 255, 0.3);
             margin-bottom: 1rem;
         }
+        .feature-highlight {
+            color: #b0b0b0;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
         .restaurant-badge {
             background: rgba(74, 105, 189, 0.3);
             color: #ffffff;
@@ -171,7 +177,8 @@
         <div class="cart-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1><i class="bi bi-cart3"></i> Shopping Cart</h1>
+                    <h1><i class="bi bi-cart3 text-primary"></i> Shopping Cart</h1>
+                    <p class="text-muted"><i class="bi bi-truck"></i> Track your delivery in real-time after checkout</p>
                     <p class="mb-0" id="restaurantInfo"></p>
                 </div>
                 <button class="btn btn-clear" onclick="clearCart()" id="clearCartBtn" style="display: none;">
